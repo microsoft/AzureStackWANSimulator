@@ -1,14 +1,41 @@
-# Project
+# Azure Stack WAN Simulator Project
+> This repo is current private only, and will open to public once fully reviewed.
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+## Project Overview
 
-As the maintainer of this project, please make a few updates:
+To better support different Azure Stack profile service, an automated customized traffic control validation meachinsim need to be developed and deployed to suit rapid growth product request. 
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+### Main Components
+#### SONiC
+- [Images](https://github.com/sonic-net/sonic-buildimage)
+- [USER MANUAL](https://github.com/sonic-net/SONiC/blob/master/doc/SONiC-User-Manual.md)
+
+#### Network Emulator
+[Using NetEm to Emulate Networks](https://srtlab.github.io/srt-cookbook/how-to-articles/using-netem-to-emulate-networks.html#:~:text=NetEm%28Network%20Emulator%29%20is%20an%20enhancement%20of%20the%20Linux,Differentiated%20Services%20%28diffserv%29%20facilities%20in%20the%20Linux%20kernel)
+
+#### Standard DataFlow
+
+In standard deployment, it is hard to automate the traffic control rules in the data path.
+
+```mermaid
+flowchart LR
+
+A[Client] <--> |Routing| B(Border-Switch)
+B(Border-Switch) <--> |eBGP| C(TOR-Switch)
+C(TOR-Switch) <--> |VLAN| D[VM-Host]
+```
+
+#### Customized DataFlow with WAN-SIM Setup
+
+Add vSONiC vm to redirect routes and apply traffic control rules on tunnels to suit needs.
+
+```mermaid
+flowchart LR
+A[Client] <--> |Routing| B(Border-Switch)
+B(Border-Switch) <--> |eBGP| D(vSONiC)
+C(TOR-Switch) <-.-> |GRE Tunnel| D(vSONiC)
+C(TOR-Switch) <--> |VLAN| E[VM-Host]
+```
 
 ## Contributing
 
