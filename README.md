@@ -28,12 +28,24 @@ C(TOR-Switch) <--> |VLAN| D[VM-Host]
 #### Customized DataFlow with WAN-SIM Setup
 
 Add vSONiC vm to redirect routes and apply traffic control rules on tunnels to suit needs.
+- Border-Switch establishes eBGP neighbors with vSONiC and TOR-Switch.
+- Border-Switch advertise default route to TOR-Switch.
+- vSONiC establish GRE Tunnel with TOR-Switch.
+- vSONiC config static route with longer prefix and forward to GRE Tunnel
+- vSONiC redistribute static routes to Border-Switch via eBGP
+- TOR-Switch forward all traffic to GRE Tunnel as primary route.
+- TOR-Switch advertise Tenant networks to Border-Switch.
+- TOR-Switch only learn default route from Border-Switch as backup route.
+- Border-Switch learns better Tenant networks from vSONiC because longer prefix.
+
+So the dataflow will show as below:
 
 ```mermaid
 flowchart LR
 A[Client] <--> |Routing| B(Border-Switch)
 B(Border-Switch) <--> |eBGP| D(vSONiC)
-C(TOR-Switch) <-.-> |GRE Tunnel| D(vSONiC)
+B(Border-Switch) <-.-> |Backup-eBGP| C(TOR-Switch)
+C(TOR-Switch) <--> |GRE Tunnel| D(vSONiC)
 C(TOR-Switch) <--> |VLAN| E[VM-Host]
 ```
 
