@@ -64,25 +64,13 @@ links:
     i1: i1
     i2: i3
     label: ubuntu-1-ens3<->ASZ1-TOR1-Ethernet1/2
-  - id: l10
-    n1: n7
-    n2: n2
-    i1: i0
-    i2: i1
-    label: ubuntu-1-ens2<->ToInternet-port1
-  - id: l11
-    n1: n6
-    n2: n2
-    i1: i0
-    i2: i3
-    label: ubuntu-0-ens2<->ToInternet-port3
 nodes:
   - boot_disk_size: 0
     configuration: |2-
 
       !Command: show running-config
-      !Running configuration last done at: Tue Aug  1 18:22:01 2023
-      !Time: Tue Aug  1 18:22:01 2023
+      !Running configuration last done at: Tue Aug  1 22:00:03 2023
+      !Time: Tue Aug  1 22:00:04 2023
 
       version 9.3(8) Bios:version
       hostname ASZ1-TOR1
@@ -101,12 +89,17 @@ nodes:
       feature lacp
       feature tunnel
       feature lldp
+      feature sla sender
+      feature sla responder
 
       no password strength-check
       username admin password 5 $5$BFMIMH$COyt5rGc7xQoAVjpy/0AMie1RiWNqxyWD.ic/OdcJ85  role network-admin
       username cisco password 5 $5$NFAGOK$6SH/LcyK0NlBuwc73vC10RILf9HdpVD9J06aJcW/h56  role network-admin
       username cisco passphrase  lifetime 99999 warntime 14 gracetime 3
       ip domain-lookup
+      track 1 ip sla 1 reachability
+       delay down 2
+
       copp profile strict
       snmp-server user admin network-admin auth md5 0045CE37AEE9D197BFBCBFD1D2914AFC35B2 priv 01729060A1ECD48088A9A98F98C608BA35E5 localizedV2key
       snmp-server user cisco network-admin auth md5 364FDE29BCEB82C6E3CFA6CBD0D349EC7FEE priv 4957843DF1EFCE9CA49BFBC581F477BD6BF2 localizedV2key
@@ -116,10 +109,13 @@ nodes:
       rmon event 4 log trap public description WARNING(4) owner PMON@WARNING
       rmon event 5 log trap public description INFORMATION(5) owner PMON@INFO
 
-      ip route 0.0.0.0/0 Tunnel1
+      ip route 0.0.0.0/0 Tunnel1 track 1
       vlan 1,7,99,125
 
       no cdp enable
+      ip prefix-list ExternalPrefix seq 10 permit 0.0.0.0/0
+      ip prefix-list ExternalPrefix seq 20 permit 11.11.11.11/32
+      ip prefix-list ExternalPrefix seq 50 deny 0.0.0.0/0 le 32
       vrf context management
 
 
@@ -169,7 +165,7 @@ nodes:
       interface Tunnel1
         ip address 20.0.0.0/31
         tunnel source 100.71.125.2
-        tunnel destination 10.0.0.14
+        tunnel destination 11.11.11.11
         mtu 9192
         bandwidth 2000000
         no shutdown
@@ -355,9 +351,11 @@ nodes:
         router-id 2.2.2.2
         address-family ipv4 unicast
           network 100.71.125.0/26
+          network 100.73.7.0/24
         neighbor 10.0.0.1
           remote-as 65001
           address-family ipv4 unicast
+            prefix-list ExternalPrefix in
             maximum-prefix 12000 warning-only
             soft-reconfiguration inbound
         neighbor 100.73.100.2
@@ -366,6 +364,10 @@ nodes:
             maximum-prefix 12000 warning-only
             soft-reconfiguration inbound
 
+      ip sla 1
+        icmp-echo 20.0.0.1 source-ip 20.0.0.0
+          frequency 5
+      ip sla schedule 1 life forever start-time now
       no logging console
     cpu_limit: 100
     cpus: 2
@@ -418,8 +420,8 @@ nodes:
     configuration: |2-
 
       !Command: show running-config
-      !Running configuration last done at: Tue Aug  1 18:22:18 2023
-      !Time: Tue Aug  1 18:22:19 2023
+      !Running configuration last done at: Tue Aug  1 22:00:02 2023
+      !Time: Tue Aug  1 22:00:03 2023
 
       version 9.3(8) Bios:version
       hostname Border
@@ -618,12 +620,14 @@ nodes:
           remote-as 65002
           address-family ipv4 unicast
             maximum-prefix 12000 warning-only
+            default-originate
             next-hop-self
             soft-reconfiguration inbound
         neighbor 10.0.0.6
           remote-as 65002
           address-family ipv4 unicast
             maximum-prefix 12000 warning-only
+            default-originate
             next-hop-self
             soft-reconfiguration inbound
         neighbor 10.0.0.10
@@ -698,8 +702,8 @@ nodes:
     node_definition: unmanaged_switch
     ram: 0
     tags: []
-    x: 922
-    y: 146
+    x: 938
+    y: 168
     interfaces:
       - id: i0
         label: port0
@@ -744,8 +748,8 @@ nodes:
     node_definition: external_connector
     ram: 0
     tags: []
-    x: 1009
-    y: 143
+    x: 1134
+    y: 165
     interfaces:
       - id: i0
         label: port
@@ -755,8 +759,8 @@ nodes:
     configuration: |2-
 
       !Command: show running-config
-      !Running configuration last done at: Tue Aug  1 18:22:18 2023
-      !Time: Tue Aug  1 18:22:19 2023
+      !Running configuration last done at: Tue Aug  1 22:00:11 2023
+      !Time: Tue Aug  1 22:00:11 2023
 
       version 9.3(8) Bios:version
       hostname WAN-SIM
@@ -798,7 +802,7 @@ nodes:
 
       interface Tunnel1
         ip address 20.0.0.1/31
-        tunnel source 10.0.0.14
+        tunnel source 11.11.11.11
         tunnel destination 100.71.125.2
         mtu 9192
         bandwidth 2000000
@@ -970,12 +974,12 @@ nodes:
     data_volume: 0
     hide_links: false
     id: n4
-    label: WAN-SIM-NXOS
+    label: WAN-SIM
     node_definition: nxosv9000
     ram: 8192
     tags: []
-    x: 557
-    y: 112
+    x: 536
+    y: 103
     interfaces:
       - id: i0
         label: Loopback0
@@ -1000,8 +1004,8 @@ nodes:
     configuration: |2-
 
       !Command: show running-config
-      !Running configuration last done at: Tue Aug  1 18:22:03 2023
-      !Time: Tue Aug  1 18:22:04 2023
+      !Running configuration last done at: Tue Aug  1 21:59:47 2023
+      !Time: Tue Aug  1 21:59:48 2023
 
       version 9.3(8) Bios:version
       hostname ASZ1-TOR2
@@ -1039,6 +1043,9 @@ nodes:
       vlan 1,7,99,125
 
       no cdp enable
+      ip prefix-list ExternalPrefix seq 10 permit 0.0.0.0/0
+      ip prefix-list ExternalPrefix seq 20 permit 11.11.11.11/32
+      ip prefix-list ExternalPrefix seq 50 deny 0.0.0.0/0 le 32
       vrf context management
 
 
@@ -1272,9 +1279,11 @@ nodes:
         router-id 3.3.3.3
         address-family ipv4 unicast
           network 100.71.125.0/26
+          network 100.73.7.0/24
         neighbor 10.0.0.5
           remote-as 65001
           address-family ipv4 unicast
+            prefix-list ExternalPrefix in
             maximum-prefix 12000 warning-only
             soft-reconfiguration inbound
         neighbor 100.73.100.1
@@ -1294,7 +1303,7 @@ nodes:
     ram: 8192
     tags: []
     x: 185
-    y: 232
+    y: 236
     interfaces:
       - id: i0
         label: Loopback0
@@ -1353,8 +1362,8 @@ nodes:
     node_definition: ubuntu
     ram: 2000
     tags: []
-    x: 663
-    y: 278
+    x: 658
+    y: 281
     interfaces:
       - id: i0
         label: ens2
@@ -1386,8 +1395,8 @@ nodes:
     node_definition: ubuntu
     ram: 2000
     tags: []
-    x: 390
-    y: 13
+    x: -31
+    y: 165
     interfaces:
       - id: i0
         label: ens2
