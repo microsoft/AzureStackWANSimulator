@@ -9,6 +9,7 @@ To better support different Azure Stack profile service, an automated customized
 #### SONiC
 - [Images](https://github.com/sonic-net/sonic-buildimage)
 - [USER MANUAL](https://github.com/sonic-net/SONiC/blob/master/doc/SONiC-User-Manual.md)
+- [Sonic VHDX Download](https://aka.ms/azssonic)
 
 #### Network Emulator
 [Using NetEm to Emulate Networks](https://srtlab.github.io/srt-cookbook/how-to-articles/using-netem-to-emulate-networks.html#:~:text=NetEm%28Network%20Emulator%29%20is%20an%20enhancement%20of%20the%20Linux,Differentiated%20Services%20%28diffserv%29%20facilities%20in%20the%20Linux%20kernel)
