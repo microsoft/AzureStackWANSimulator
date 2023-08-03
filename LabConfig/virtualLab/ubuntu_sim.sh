@@ -1,7 +1,7 @@
 # !!!Not Testing
 # Init
 sudo apt-get update
-sudo apt-get install -y net-tools frr iperf
+sudo apt-get install -y net-tools frr iperf3
 NEW_HOSTNAME="WAN-SIM"
 sudo hostnamectl set-hostname $NEW_HOSTNAME
 sudo reboot
