@@ -20,10 +20,15 @@ sudo ip addr add 192.168.30.2/30 dev gre1
 sudo ip link set gre1 up
 # sudo ip tunnel del gre1
 # GRE
-sudo ip link set eth0 txqueuelen 1000
-sudo ip link set eth0 mtu 1500
-sudo ip link set gre1 mtu 1476
-sudo ip link set gre1 txqueuelen 1000
+sudo ip link set eth0 txqueuelen 10000
+sudo ip link set eth0 mtu 9216
+sudo ip link set gre1 mtu 9192
+sudo ip link set gre1 txqueuelen 10000
+
+## Docker Pull
+### Host VM - if http 408 error
+sudo ifconfig eth0 mtu 1400
+
 
 
 # IP FORWARDING !!!!
