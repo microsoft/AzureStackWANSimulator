@@ -1,6 +1,6 @@
 # Init
 sudo apt-get update
-sudo apt-get install -y net-tools iperf
+sudo apt-get install -y net-tools iperf3 traceroute
 NEW_HOSTNAME="Client"
 sudo hostnamectl set-hostname $NEW_HOSTNAME
 sudo reboot
@@ -30,3 +30,10 @@ sudo tc qdisc del dev ens3 root
 sudo iperf -s
 ## client test
 iperf -c 100.73.7.11 -t 5 -i 1 -w 4m
+
+
+# Generate dumy file with specify size. Below is 1G 100*10M
+dd if=/dev/zero of=test00.txt bs=10M count=100
+
+# scp /path/to/local/file username@remote_ip:/path/to/destination/
+scp test00.txt cisco@100.73.7.11:/home/cisco

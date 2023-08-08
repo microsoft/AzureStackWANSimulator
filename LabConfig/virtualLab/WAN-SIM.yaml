@@ -122,7 +122,7 @@ nodes:
       interface Vlan1
 
       interface Vlan7
-        description Infrastructure
+        description Tenant
         no shutdown
         mtu 9216
         no ip redirects
@@ -132,6 +132,18 @@ nodes:
         hsrp 7
           priority 150 forwarding-threshold lower 1 upper 140
           ip 100.73.7.1
+
+      interface Vlan8
+        description Tenant
+        no shutdown
+        mtu 9216
+        no ip redirects
+        ip address 100.73.8.2/24
+        no ipv6 redirects
+        hsrp version 2
+        hsrp 8
+          priority 150 forwarding-threshold lower 1 upper 140
+          ip 100.73.8.1
 
       interface Vlan125
         description BMCMgmt
@@ -1040,7 +1052,7 @@ nodes:
       rmon event 5 log trap public description INFORMATION(5) owner PMON@INFO
 
       ip route 0.0.0.0/0 Tunnel1
-      vlan 1,7,99,125
+      vlan 1,7,8,99,125
 
       no cdp enable
       ip prefix-list ExternalPrefix seq 10 permit 0.0.0.0/0
@@ -1052,7 +1064,7 @@ nodes:
       interface Vlan1
 
       interface Vlan7
-        description Infrastructure
+        description Tenant
         no shutdown
         mtu 9216
         no ip redirects
@@ -1062,6 +1074,18 @@ nodes:
         hsrp 7
           priority 140 forwarding-threshold lower 1 upper 140
           ip 100.73.7.1
+
+      interface Vlan8
+        description Tenant
+        no shutdown
+        mtu 9216
+        no ip redirects
+        ip address 100.73.8.3/24
+        no ipv6 redirects
+        hsrp version 2
+        hsrp 8
+          priority 140 forwarding-threshold lower 1 upper 140
+          ip 100.73.8.1
 
       interface Vlan125
         description BMCMgmt

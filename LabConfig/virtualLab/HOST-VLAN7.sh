@@ -1,7 +1,7 @@
 # Init
 sudo apt-get update
-sudo apt-get install -y net-tools iperf
-NEW_HOSTNAME="ASZHost"
+sudo apt-get install -y net-tools iperf3 traceroute
+NEW_HOSTNAME="HOST-VLAN7"
 sudo hostnamectl set-hostname $NEW_HOSTNAME
 sudo reboot
 
@@ -30,3 +30,6 @@ sudo tc qdisc del dev ens3 root
 sudo iperf -s
 ## client test
 iperf -c 100.73.7.11 -t 5 -i 1 -w 4m
+
+
+scp test00.txt administrator@100.71.55.119:/home/administrator/Downloads/

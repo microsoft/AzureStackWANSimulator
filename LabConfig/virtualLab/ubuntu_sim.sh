@@ -1,17 +1,19 @@
 # !!!Not Testing
 # Init
 sudo apt-get update
-sudo apt-get install -y net-tools frr iperf3
+sudo apt-get install -y net-tools frr iperf3 traceroute
 NEW_HOSTNAME="WAN-SIM"
 sudo hostnamectl set-hostname $NEW_HOSTNAME
 sudo reboot
 
-# Config Interface
-sudo ifconfig ens3 10.0.0.10 netmask 255.255.255.252
+
 #Config loopback 1
 sudo ip link add lo1 type dummy
 sudo ip addr add 11.11.11.11/32 dev lo1
 sudo ip link set lo1 up
+# Config Interface
+sudo ifconfig ens3 10.0.0.10 netmask 255.255.255.252
+
 
 ---
 ## Config FRR
@@ -21,6 +23,8 @@ sudo service frr restart
 ## Config BGP
 sudo vtysh
 conf t
+ip forwarding
+ip route 100.73.7.0/25 20.0.0.0
 router bgp 65003
  bgp router-id 11.11.11.11
  no bgp ebgp-requires-policy # Disable BGP Policy
@@ -49,10 +53,10 @@ sudo ip link set gre1 up
 
 
 # Config Static Route
-sudo ip route add 100.73.7.0/25 via 20.0.0.0
-sudo ip route add 100.73.7.0/25 via 20.0.0.2 metric 100
-sudo ip route add 100.73.7.128/25 via 20.0.0.0
-sudo ip route add 100.73.7.128/25 via 20.0.0.2 metric 100
+# sudo ip route add 100.73.7.0/25 via 20.0.0.0
+# sudo ip route add 100.73.7.0/25 via 20.0.0.2 metric 100
+# sudo ip route add 100.73.7.128/25 via 20.0.0.0
+# sudo ip route add 100.73.7.128/25 via 20.0.0.2 metric 100
 # sudo ip route del 7.7.7.0/25 dev gre1
 # sudo ip route del 7.7.7.128/25 dev gre1
 
