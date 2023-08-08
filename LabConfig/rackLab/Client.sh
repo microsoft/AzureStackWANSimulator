@@ -12,6 +12,8 @@ scp test00.txt administrator@100.69.178.11:/home/administrator/Downloads/
 test00.txt                                      0% 2128KB   1.6MB/s   10:15 ETA
 
 # WGET
+## Golang
+wget https://go.dev/dl/go1.21.0.darwin-amd64.tar.gz
 ## go1.21.0.darwin-amd 100%[===================>]  64.03M   117MB/s    in 0.5s    
 ## Ubuntu Server 1.5G
 wget https://releases.ubuntu.com/20.04.6/ubuntu-20.04.6-live-server-amd64.iso
