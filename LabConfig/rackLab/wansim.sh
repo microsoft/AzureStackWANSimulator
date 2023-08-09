@@ -85,7 +85,12 @@ sudo tc qdisc add dev eth0 root netem rate 800mbit
 sudo tc qdisc show dev eth0
 sudo tc qdisc del dev eth0 root
 
-sudo scp test00.txt administrator@100.71.55.119:/home/administrator/Downloads/
+## Diff the bw rate based on subnet
+sudo tc qdisc add dev eth0 root handle 1: htb default 10
+sudo tc class add dev eth0 parent 1: classid 1:1 htb rate 100mbit
+sudo tc class add dev eth0 parent 1:1 classid 1:10 htb rate 800mbit
+sudo tc filter add dev eth0 parent 1:0 protocol ip prio 1 u32 match ip dst 100.69.177.0/24 flowid 1:1
+
 
 # TOR BGP Config
 router bgp 65231

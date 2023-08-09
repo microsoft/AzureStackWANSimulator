@@ -28,3 +28,7 @@ wget https://releases.ubuntu.com/20.04.6/ubuntu-20.04.6-live-server-amd64.iso
 
 
 # Minikube
+kubectl apply -f https://k8s.io/examples/controllers/nginx-deployment.yaml
+kubectl expose deployment nginx-deployment --name=nginx-deployment --type=LoadBalancer --target-port=80 --port=8080 --external-ip=100.69.177.11
+minikube service nginx-deployment --url
+kubectl delete deployment nginx-deployment 
