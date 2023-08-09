@@ -78,10 +78,12 @@ end
 
 
 # Apply Rules
-## On Interface gre1
-sudo tc qdisc add dev gre1 root netem rate 100mbit
-sudo tc qdisc show dev gre1
-sudo tc qdisc del dev gre1 root
+## On Interface eth0
+## 100 Mbit/s * (1 B / 8 b) = 12.5 MB/s
+## 100 MB * 8 Mbit/MB = 800 Mbit
+sudo tc qdisc add dev eth0 root netem rate 800mbit
+sudo tc qdisc show dev eth0
+sudo tc qdisc del dev eth0 root
 
 sudo scp test00.txt administrator@100.71.55.119:/home/administrator/Downloads/
 
