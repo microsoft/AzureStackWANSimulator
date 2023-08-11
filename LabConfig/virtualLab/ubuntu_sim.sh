@@ -38,12 +38,13 @@ router bgp 65003
 exit
 
 # Config GRE
-sudo ip tunnel add gre1 mode gre remote 100.71.125.2 local 11.11.11.11 ttl 255
-sudo ip addr add 20.0.0.1/31 dev gre1
+## Use HSRP IP as source, Switch need to config 100.71.125.1 instead of vlan125 to consistent
+sudo ip tunnel add gre1 mode gre remote 100.71.125.1 local 11.11.11.11 ttl 255
+sudo ip addr add 20.0.0.1/29 dev gre1
 sudo ip link set gre1 up
 #sudo ip tunnel del gre1
 ## Source physical interface
-#sudo ip tunnel add gre1 mode gre remote 100.71.125.2 local 11.11.11.11 ttl 255
+#sudo ip tunnel add gre1 mode gre remote 100.71.125.3 local 11.11.11.11 ttl 255
 #sudo ip addr add 20.0.0.1/31 dev gre1
 #sudo ip link set gre1 up
 
