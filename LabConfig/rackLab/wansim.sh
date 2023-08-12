@@ -85,6 +85,9 @@ sudo tc qdisc add dev eth0 root netem rate 800mbit
 sudo tc qdisc show dev eth0
 sudo tc qdisc del dev eth0 root
 
+## Combination
+sudo tc qdisc add dev eth0 root netem delay 100ms 50ms 30% loss 10% rate 800mbit
+
 ## Diff the bw rate based on subnet
 sudo tc qdisc add dev eth0 root handle 1: htb default 10
 sudo tc class add dev eth0 parent 1: classid 1:1 htb rate 100mbit

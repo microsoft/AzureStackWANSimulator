@@ -64,12 +64,16 @@ sudo ip link set gre1 up
 # netem
 # https://srtlab.github.io/srt-cookbook/how-to-articles/using-netem-to-emulate-networks.html
 # Delay + Random
-sudo tc qdisc add dev eth1 root netem delay 100ms 50ms 30%
+sudo tc qdisc add dev ens3 root netem delay 100ms 50ms 30%
 # Loss
-sudo tc qdisc add dev eth1 root netem loss 10%
-# Delay + Reorder
-sudo tc qdisc add dev eth1 root netem delay 100ms 50ms 30% loss 10%
+sudo tc qdisc add dev ens3 root netem loss 10%
+# BW
+sudo tc qdisc add dev ens3 root netem rate 500kbit
+# Delay + Loss
+sudo tc qdisc add dev ens3 root netem delay 100ms 50ms 30% loss 10%
+# Delay + Loss + BW limitation
+sudo tc qdisc add dev ens3 root netem delay 100ms 50ms 30% loss 10% rate 500kbit
 ## View Current Config
-sudo tc qdisc show dev eth1
+sudo tc qdisc show dev ens3
 ## Remove All
-sudo tc qdisc del dev eth1 root netem
+sudo tc qdisc del dev ens3 root

@@ -17,60 +17,72 @@ links:
     i2: i2
     label: Lab-Border-Ethernet1/1<->ASZ-ENV1-Ethernet1/1
   - id: l2
-    n1: n5
+    n1: n4
     n2: n1
     i1: i2
     i2: i3
     label: ASZ1-TOR2-Ethernet1/1<->Lab-Border-Ethernet1/2
   - id: l3
-    n1: n1
-    n2: n4
-    i1: i5
-    i2: i2
-    label: Lab-Border-Ethernet1/4<->WAN-SIM01-Ethernet1/1
-  - id: l4
     n1: n0
-    n2: n5
+    n2: n4
     i1: i4
     i2: i4
     label: ASZ1-TOR1-Ethernet1/3<->ASZ1-TOR2-Ethernet1/3
-  - id: l5
+  - id: l4
     n1: n0
-    n2: n5
+    n2: n4
     i1: i5
     i2: i5
     label: ASZ1-TOR1-Ethernet1/4<->ASZ1-TOR2-Ethernet1/4
-  - id: l6
+  - id: l5
     n1: n0
-    n2: n5
+    n2: n4
     i1: i6
     i2: i6
     label: ASZ1-TOR1-Ethernet1/5<->ASZ1-TOR2-Ethernet1/5
-  - id: l7
+  - id: l6
     n1: n0
-    n2: n5
+    n2: n4
     i1: i7
     i2: i7
     label: ASZ1-TOR1-Ethernet1/6<->ASZ1-TOR2-Ethernet1/6
-  - id: l8
-    n1: n6
+  - id: l7
+    n1: n5
     n2: n1
     i1: i1
     i2: i6
     label: ubuntu-0-ens3<->Lab-Border-Ethernet1/5
+  - id: l8
+    n1: n6
+    n2: n1
+    i1: i1
+    i2: i4
+    label: ubuntu-0-ens3<->Lab-Border-Ethernet1/3
   - id: l9
+    n1: n7
+    n2: n2
+    i1: i0
+    i2: i1
+    label: ubuntu-0-ens2<->ToInternet-port1
+  - id: l10
     n1: n7
     n2: n0
     i1: i1
-    i2: i3
-    label: ubuntu-1-ens3<->ASZ1-TOR1-Ethernet1/2
+    i2: i8
+    label: ubuntu-0-ens3<->ASZ1-TOR1-Ethernet1/7
+  - id: l11
+    n1: n7
+    n2: n4
+    i1: i2
+    i2: i8
+    label: ubuntu-0-ens4<->ASZ1-TOR2-Ethernet1/7
 nodes:
   - boot_disk_size: 0
     configuration: |2-
 
       !Command: show running-config
-      !Running configuration last done at: Tue Aug  1 22:00:03 2023
-      !Time: Tue Aug  1 22:00:04 2023
+      !Running configuration last done at: Fri Aug 11 23:53:24 2023
+      !Time: Fri Aug 11 23:53:24 2023
 
       version 9.3(8) Bios:version
       hostname ASZ1-TOR1
@@ -110,7 +122,7 @@ nodes:
       rmon event 5 log trap public description INFORMATION(5) owner PMON@INFO
 
       ip route 0.0.0.0/0 Tunnel1 track 1
-      vlan 1,7,99,125
+      vlan 1,7-8,99,125
 
       no cdp enable
       ip prefix-list ExternalPrefix seq 10 permit 0.0.0.0/0
@@ -122,7 +134,7 @@ nodes:
       interface Vlan1
 
       interface Vlan7
-        description Tenant
+        description Infrastructure
         no shutdown
         mtu 9216
         no ip redirects
@@ -130,7 +142,8 @@ nodes:
         no ipv6 redirects
         hsrp version 2
         hsrp 7
-          priority 150 forwarding-threshold lower 1 upper 140
+          preempt
+          priority 150 forwarding-threshold lower 1 upper 150
           ip 100.73.7.1
 
       interface Vlan8
@@ -154,6 +167,7 @@ nodes:
         no ipv6 redirects
         hsrp version 2
         hsrp 125
+          preempt
           priority 150 forwarding-threshold lower 1 upper 150
           ip 100.71.125.1
 
@@ -175,10 +189,10 @@ nodes:
         mtu 9216
 
       interface Tunnel1
-        ip address 20.0.0.0/31
-        tunnel source 100.71.125.2
+        ip address 20.0.0.2/29
+        tunnel source 100.71.125.1
         tunnel destination 11.11.11.11
-        mtu 9192
+        mtu 9100
         bandwidth 2000000
         no shutdown
 
@@ -189,6 +203,8 @@ nodes:
 
       interface Ethernet1/2
         switchport access vlan 7
+        mtu 9216
+        bandwidth 10000000
 
       interface Ethernet1/3
         description MLAG Heartbeat and iBGP TOR1-TOR2
@@ -231,6 +247,8 @@ nodes:
         channel-group 101 mode active
 
       interface Ethernet1/7
+        switchport access vlan 7
+        mtu 9216
 
       interface Ethernet1/8
 
@@ -364,6 +382,7 @@ nodes:
         address-family ipv4 unicast
           network 100.71.125.0/26
           network 100.73.7.0/24
+          network 100.73.8.0/24
         neighbor 10.0.0.1
           remote-as 65001
           address-family ipv4 unicast
@@ -377,7 +396,7 @@ nodes:
             soft-reconfiguration inbound
 
       ip sla 1
-        icmp-echo 20.0.0.1 source-ip 20.0.0.0
+        icmp-echo 20.0.0.1 source-ip 20.0.0.2
           frequency 5
       ip sla schedule 1 life forever start-time now
       no logging console
@@ -390,8 +409,8 @@ nodes:
     node_definition: nxosv9000
     ram: 8192
     tags: []
-    x: 186
-    y: 85
+    x: 199
+    y: 82
     interfaces:
       - id: i0
         label: Loopback0
@@ -432,8 +451,8 @@ nodes:
     configuration: |2-
 
       !Command: show running-config
-      !Running configuration last done at: Tue Aug  1 22:00:02 2023
-      !Time: Tue Aug  1 22:00:03 2023
+      !Running configuration last done at: Fri Aug 11 23:50:53 2023
+      !Time: Fri Aug 11 23:50:54 2023
 
       version 9.3(8) Bios:version
       hostname Border
@@ -462,7 +481,7 @@ nodes:
       rmon event 4 log trap public description WARNING(4) owner PMON@WARNING
       rmon event 5 log trap public description INFORMATION(5) owner PMON@INFO
 
-      vlan 1
+      vlan 1,3
 
       route-map DIRECT-CONNECT permit 10
       vrf context management
@@ -480,6 +499,8 @@ nodes:
 
       interface Ethernet1/3
         no switchport
+        mtu 9216
+        bandwidth 10000000
         ip address 10.0.0.9/30
         no shutdown
 
@@ -490,6 +511,7 @@ nodes:
 
       interface Ethernet1/5
         no switchport
+        bandwidth 10000000
         ip address 172.16.0.1/24
         no shutdown
 
@@ -630,6 +652,7 @@ nodes:
           redistribute direct route-map DIRECT-CONNECT
         neighbor 10.0.0.2
           remote-as 65002
+          timers 15 30
           address-family ipv4 unicast
             maximum-prefix 12000 warning-only
             default-originate
@@ -637,6 +660,7 @@ nodes:
             soft-reconfiguration inbound
         neighbor 10.0.0.6
           remote-as 65002
+          timers 15 30
           address-family ipv4 unicast
             maximum-prefix 12000 warning-only
             default-originate
@@ -644,6 +668,7 @@ nodes:
             soft-reconfiguration inbound
         neighbor 10.0.0.10
           remote-as 65003
+          timers 15 30
           address-family ipv4 unicast
             maximum-prefix 12000 warning-only
             next-hop-self
@@ -665,8 +690,8 @@ nodes:
     node_definition: nxosv9000
     ram: 8192
     tags: []
-    x: 413
-    y: 285
+    x: 424
+    y: 176
     interfaces:
       - id: i0
         label: Loopback0
@@ -714,8 +739,8 @@ nodes:
     node_definition: unmanaged_switch
     ram: 0
     tags: []
-    x: 938
-    y: 168
+    x: -40
+    y: 294
     interfaces:
       - id: i0
         label: port0
@@ -760,8 +785,8 @@ nodes:
     node_definition: external_connector
     ram: 0
     tags: []
-    x: 1134
-    y: 165
+    x: -236
+    y: 292
     interfaces:
       - id: i0
         label: port
@@ -771,253 +796,8 @@ nodes:
     configuration: |2-
 
       !Command: show running-config
-      !Running configuration last done at: Tue Aug  1 22:00:11 2023
-      !Time: Tue Aug  1 22:00:11 2023
-
-      version 9.3(8) Bios:version
-      hostname WAN-SIM
-      vdc WAN-SIM id 1
-        limit-resource vlan minimum 16 maximum 4094
-        limit-resource vrf minimum 2 maximum 4096
-        limit-resource port-channel minimum 0 maximum 511
-        limit-resource u4route-mem minimum 248 maximum 248
-        limit-resource u6route-mem minimum 96 maximum 96
-        limit-resource m4route-mem minimum 58 maximum 58
-        limit-resource m6route-mem minimum 8 maximum 8
-
-      feature bgp
-      feature tunnel
-
-      no password strength-check
-      username admin password 5 $5$MEAIAE$HUapNhyWjBFtBSdF2eQjYBRQTo.PHOe1BxrcG5Rbkh8  role network-admin
-      username cisco password 5 $5$GAFPPM$0R7Ebhc3.KmwVheI7eGX4dozBidN.mOa8m/CcnWIqw7  role network-admin
-      username cisco passphrase  lifetime 99999 warntime 14 gracetime 3
-      ip domain-lookup
-      copp profile strict
-      snmp-server user admin network-admin auth md5 4942FA4A9B26E2D1FECC92CE3FA9066ACB21 priv 366FE30FC636FBDEF1B7D28766C112328F3C localizedV2key
-      snmp-server user cisco network-admin auth md5 165BA413F947DBA38DF7EDD568931D02DF77 priv 5233AC09D43FD2C8E5C2F3D43D98032BD658 localizedV2key
-      rmon event 1 log trap public description FATAL(1) owner PMON@FATAL
-      rmon event 2 log trap public description CRITICAL(2) owner PMON@CRITICAL
-      rmon event 3 log trap public description ERROR(3) owner PMON@ERROR
-      rmon event 4 log trap public description WARNING(4) owner PMON@WARNING
-      rmon event 5 log trap public description INFORMATION(5) owner PMON@INFO
-
-      ip route 100.73.7.0/25 Tunnel1
-      ip route 100.73.7.0/25 Tunnel2 10
-      ip route 100.73.7.128/25 Tunnel1
-      ip route 100.73.7.128/25 Tunnel2 10
-      vlan 1
-
-      route-map STATIC-ROUTE permit 10
-      vrf context management
-
-
-      interface Tunnel1
-        ip address 20.0.0.1/31
-        tunnel source 11.11.11.11
-        tunnel destination 100.71.125.2
-        mtu 9192
-        bandwidth 2000000
-        no shutdown
-
-      interface Tunnel2
-        ip address 20.0.0.3/31
-        tunnel source 11.11.11.11
-        tunnel destination 100.71.125.3
-
-      interface Ethernet1/1
-        no switchport
-        ip address 10.0.0.14/30
-        no shutdown
-
-      interface Ethernet1/2
-
-      interface Ethernet1/3
-
-      interface Ethernet1/4
-
-      interface Ethernet1/5
-
-      interface Ethernet1/6
-
-      interface Ethernet1/7
-
-      interface Ethernet1/8
-
-      interface Ethernet1/9
-
-      interface Ethernet1/10
-
-      interface Ethernet1/11
-
-      interface Ethernet1/12
-
-      interface Ethernet1/13
-
-      interface Ethernet1/14
-
-      interface Ethernet1/15
-
-      interface Ethernet1/16
-
-      interface Ethernet1/17
-
-      interface Ethernet1/18
-
-      interface Ethernet1/19
-
-      interface Ethernet1/20
-
-      interface Ethernet1/21
-
-      interface Ethernet1/22
-
-      interface Ethernet1/23
-
-      interface Ethernet1/24
-
-      interface Ethernet1/25
-
-      interface Ethernet1/26
-
-      interface Ethernet1/27
-
-      interface Ethernet1/28
-
-      interface Ethernet1/29
-
-      interface Ethernet1/30
-
-      interface Ethernet1/31
-
-      interface Ethernet1/32
-
-      interface Ethernet1/33
-
-      interface Ethernet1/34
-
-      interface Ethernet1/35
-
-      interface Ethernet1/36
-
-      interface Ethernet1/37
-
-      interface Ethernet1/38
-
-      interface Ethernet1/39
-
-      interface Ethernet1/40
-
-      interface Ethernet1/41
-
-      interface Ethernet1/42
-
-      interface Ethernet1/43
-
-      interface Ethernet1/44
-
-      interface Ethernet1/45
-
-      interface Ethernet1/46
-
-      interface Ethernet1/47
-
-      interface Ethernet1/48
-
-      interface Ethernet1/49
-
-      interface Ethernet1/50
-
-      interface Ethernet1/51
-
-      interface Ethernet1/52
-
-      interface Ethernet1/53
-
-      interface Ethernet1/54
-
-      interface Ethernet1/55
-
-      interface Ethernet1/56
-
-      interface Ethernet1/57
-
-      interface Ethernet1/58
-
-      interface Ethernet1/59
-
-      interface Ethernet1/60
-
-      interface Ethernet1/61
-
-      interface Ethernet1/62
-
-      interface Ethernet1/63
-
-      interface Ethernet1/64
-
-      interface mgmt0
-        vrf member management
-
-      interface loopback0
-        ip address 11.11.11.11/32
-      icam monitor scale
-
-      cli alias name wr copy running-config startup-config
-      line console
-        exec-timeout 0
-      line vty
-        exec-timeout 0
-      boot nxos bootflash:/nxos.9.3.8.bin sup-1
-      router bgp 65003
-        router-id 11.11.11.11
-        address-family ipv4 unicast
-          network 11.11.11.11/32
-          redistribute static route-map STATIC-ROUTE
-        neighbor 10.0.0.13
-          remote-as 65001
-          address-family ipv4 unicast
-            maximum-prefix 12000 warning-only
-            soft-reconfiguration inbound
-
-      no logging console
-    cpu_limit: 100
-    cpus: 2
-    data_volume: 0
-    hide_links: false
-    id: n4
-    label: WAN-SIM
-    node_definition: nxosv9000
-    ram: 8192
-    tags: []
-    x: 536
-    y: 103
-    interfaces:
-      - id: i0
-        label: Loopback0
-        type: loopback
-      - id: i1
-        label: mgmt0
-        slot: 0
-        type: physical
-      - id: i2
-        label: Ethernet1/1
-        slot: 1
-        type: physical
-      - id: i3
-        label: Ethernet1/2
-        slot: 2
-        type: physical
-      - id: i4
-        label: Ethernet1/3
-        slot: 3
-        type: physical
-  - boot_disk_size: 0
-    configuration: |2-
-
-      !Command: show running-config
-      !Running configuration last done at: Tue Aug  1 21:59:47 2023
-      !Time: Tue Aug  1 21:59:48 2023
+      !Running configuration last done at: Fri Aug 11 23:50:08 2023
+      !Time: Fri Aug 11 23:50:09 2023
 
       version 9.3(8) Bios:version
       hostname ASZ1-TOR2
@@ -1030,18 +810,22 @@ nodes:
         limit-resource m4route-mem minimum 58 maximum 58
         limit-resource m6route-mem minimum 8 maximum 8
 
+      cfs eth distribute
       feature bgp
       feature interface-vlan
       feature hsrp
       feature lacp
       feature tunnel
+      feature vpc
       feature lldp
+      feature sla sender
 
       no password strength-check
       username admin password 5 $5$CELGID$SL8Ci4lj4btytpsfQguOt4Y1/mcJ4kv4PAmVrxbp4E3  role network-admin
       username cisco password 5 $5$MBODDF$RgeREodtXoUW5V/KNxpsE8WDa.HDXfVoDIleNwW1YA/  role network-admin
       username cisco passphrase  lifetime 99999 warntime 14 gracetime 3
       ip domain-lookup
+      track 1 ip sla 1 reachability
       copp profile strict
       snmp-server user admin network-admin auth md5 21717350355E3ED601ABB3FC9008729BC83B priv 043E3B0360044DB177C9D2CAA9CFBE505958 localizedV2key
       snmp-server user cisco network-admin auth md5 322C4778073F6CBA6686899CACC4B357060D priv 042F1B21471634DD6DD7C1DEBA92EB0C2027 localizedV2key
@@ -1051,8 +835,8 @@ nodes:
       rmon event 4 log trap public description WARNING(4) owner PMON@WARNING
       rmon event 5 log trap public description INFORMATION(5) owner PMON@INFO
 
-      ip route 0.0.0.0/0 Tunnel1
-      vlan 1,7,8,99,125
+      ip route 0.0.0.0/0 Tunnel1 track 1
+      vlan 1,7-8,99,125
 
       no cdp enable
       ip prefix-list ExternalPrefix seq 10 permit 0.0.0.0/0
@@ -1064,7 +848,7 @@ nodes:
       interface Vlan1
 
       interface Vlan7
-        description Tenant
+        description Infrastructure
         no shutdown
         mtu 9216
         no ip redirects
@@ -1117,9 +901,10 @@ nodes:
         mtu 9216
 
       interface Tunnel1
-        ip address 20.0.0.2/31
-        tunnel source 100.71.125.3
+        ip address 20.0.0.3/29
+        tunnel source 100.71.125.1
         tunnel destination 11.11.11.11
+        mtu 9192
         no shutdown
 
       interface Ethernet1/1
@@ -1171,6 +956,8 @@ nodes:
         channel-group 101 mode active
 
       interface Ethernet1/7
+        switchport access vlan 7
+        mtu 9216
 
       interface Ethernet1/8
 
@@ -1304,6 +1091,7 @@ nodes:
         address-family ipv4 unicast
           network 100.71.125.0/26
           network 100.73.7.0/24
+          network 100.73.8.0/24
         neighbor 10.0.0.5
           remote-as 65001
           address-family ipv4 unicast
@@ -1316,18 +1104,22 @@ nodes:
             maximum-prefix 12000 warning-only
             soft-reconfiguration inbound
 
+      ip sla 1
+        icmp-echo 20.0.0.1 source-ip 20.0.0.3
+          frequency 5
+      ip sla schedule 1 life forever start-time now
       no logging console
     cpu_limit: 100
     cpus: 2
     data_volume: 0
     hide_links: false
-    id: n5
+    id: n4
     label: ASZ1-TOR2
     node_definition: nxosv9000
     ram: 8192
     tags: []
-    x: 185
-    y: 236
+    x: 194
+    y: 244
     interfaces:
       - id: i0
         label: Loopback0
@@ -1381,13 +1173,46 @@ nodes:
     cpus: 2
     data_volume: 0
     hide_links: false
-    id: n6
+    id: n5
     label: Client
     node_definition: ubuntu
     ram: 2000
     tags: []
-    x: 658
-    y: 281
+    x: 654
+    y: 183
+    interfaces:
+      - id: i0
+        label: ens2
+        slot: 0
+        type: physical
+      - id: i1
+        label: ens3
+        slot: 1
+        type: physical
+  - boot_disk_size: 64
+    configuration: |-
+      #cloud-config
+      hostname: inserthostname_here
+      manage_etc_hosts: True
+      system_info:
+        default_user:
+          name: cisco
+      password: cisco
+      chpasswd: { expire: False }
+      ssh_pwauth: True
+      ssh_authorized_keys:
+         - your-ssh-pubkey-line-goes-here
+    cpu_limit: 100
+    cpus: 2
+    data_volume: 0
+    hide_links: false
+    id: n6
+    label: SIM
+    node_definition: ubuntu
+    ram: 2000
+    tags: []
+    x: 423
+    y: 17
     interfaces:
       - id: i0
         label: ens2
@@ -1415,12 +1240,12 @@ nodes:
     data_volume: 0
     hide_links: false
     id: n7
-    label: ASZ-Host
+    label: HOST-VLAN7
     node_definition: ubuntu
     ram: 2000
     tags: []
-    x: -31
-    y: 165
+    x: -36
+    y: 143
     interfaces:
       - id: i0
         label: ens2
@@ -1429,4 +1254,16 @@ nodes:
       - id: i1
         label: ens3
         slot: 1
+        type: physical
+      - id: i2
+        label: ens4
+        slot: 2
+        type: physical
+      - id: i3
+        label: ens5
+        slot: 3
+        type: physical
+      - id: i4
+        label: ens6
+        slot: 4
         type: physical
