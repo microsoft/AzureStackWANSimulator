@@ -15,14 +15,14 @@ sudo ip link set Loopback1 up
 sudo ifconfig eth0 100.71.60.125 netmask 255.255.255.192
 
 # Config GRE
-sudo ip tunnel add gre1 mode gre remote 100.71.85.123 local 100.66.76.31 ttl 255
-sudo ip addr add 192.168.30.2/30 dev gre1
+sudo ip tunnel add gre1 mode gre remote 100.71.85.65 local 100.66.76.31 ttl 255
+sudo ip addr add 192.168.10.1/29 dev gre1
 sudo ip link set gre1 up
 # sudo ip tunnel del gre1
 # GRE
 sudo ip link set eth0 txqueuelen 10000
 sudo ip link set eth0 mtu 9216
-sudo ip link set gre1 mtu 9192
+sudo ip link set gre1 mtu 9100
 sudo ip link set gre1 txqueuelen 10000
 
 ## Docker Pull
@@ -40,7 +40,7 @@ no ip forwarding
 no ipv6 forwarding
 service integrated-vtysh-config
 !
-ip route 100.69.177.0/25 192.168.30.1
+ip route 100.69.177.0/25 gre1
 !
 interface Loopback1
  bandwidth 100000

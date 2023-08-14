@@ -11,6 +11,9 @@ sudo reboot
 sudo ip link add lo1 type dummy
 sudo ip addr add 11.11.11.11/32 dev lo1
 sudo ip link set lo1 up
+# sudo ip link add lo2 type dummy
+# sudo ip addr add 22.22.22.22/32 dev lo2
+# sudo ip link set lo2 up
 # Config Interface
 sudo ifconfig ens3 10.0.0.10 netmask 255.255.255.252
 
@@ -42,15 +45,16 @@ exit
 sudo ip tunnel add gre1 mode gre remote 100.71.125.1 local 11.11.11.11 ttl 255
 sudo ip addr add 20.0.0.1/29 dev gre1
 sudo ip link set gre1 up
-#sudo ip tunnel del gre1
+# sudo ip tunnel del gre1
 ## Source physical interface
-#sudo ip tunnel add gre1 mode gre remote 100.71.125.3 local 11.11.11.11 ttl 255
-#sudo ip addr add 20.0.0.1/31 dev gre1
-#sudo ip link set gre1 up
+sudo ip tunnel add gre1 mode gre remote 100.71.125.2 local 11.11.11.11 ttl 255
+sudo ip addr add 20.0.0.1/30 dev gre1
+sudo ip link set gre1 up
 
-# sudo ip tunnel add gre2 mode gre remote 100.71.125.3 local 11.11.11.11 ttl 255
-# sudo ip addr add 20.0.0.3/31 dev gre2
-# sudo ip link set gre2 up
+sudo ip tunnel add gre2 mode gre remote 100.71.125.3 local 22.22.22.22 ttl 255
+sudo ip addr add 20.0.0.5/30 dev gre2
+sudo ip link set gre2 up
+# sudo ip tunnel del gre2
 
 
 # Config Static Route
