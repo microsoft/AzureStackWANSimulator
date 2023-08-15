@@ -46,6 +46,7 @@ sudo ip tunnel add gre1 mode gre remote 100.71.125.1 local 11.11.11.11 ttl 255
 sudo ip addr add 20.0.0.1/29 dev gre1
 sudo ip link set gre1 up
 # sudo ip tunnel del gre1
+
 ## Source physical interface
 sudo ip tunnel add gre1 mode gre remote 100.71.125.2 local 11.11.11.11 ttl 255
 sudo ip addr add 20.0.0.1/30 dev gre1

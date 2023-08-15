@@ -29,12 +29,14 @@ network:
       addresses:
         - 100.69.177.11/24
       parameters:
-        mode: balance-alb
+        mode: active-backup
+        # mode: balance-alb
         mii-monitor-interval: 100
       routes:
         - to: 0.0.0.0/0
           via: 100.69.177.1
-
+      nameservers:
+        addresses: [10.50.10.50, 8.8.8.8]
 sudo netplan apply
 
 cat /proc/net/bonding/bond0

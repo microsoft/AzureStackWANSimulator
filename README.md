@@ -54,44 +54,30 @@ C(TOR-Switch) <--> |VLAN| E[VM-Host]
 | Name  | Example | Comments |
 |-------|-----|--------|
 | GRE Tunnel1 - SIP  | 100.66.76.31  | WAN-SIM Loopback1 IP address, need advertise to LAN |
-| GRE Tunnel1 - DIP | 100.71.85.123  | TOR1 BMC_Mgmt_125 IP |
-| GRE Tunnel1 - IP | 192.168.10.1/30  | Private per session, can be reused   |
+| GRE Tunnel1 - DIP | 100.71.85.65  | TOR BMC_Mgmt_125 VIP |
+| GRE Tunnel1 - IP | 192.168.10.1/29  | Private per session, can be reused   |
 
 ```bash
-sudo ip tunnel add gre1 mode gre remote 100.71.85.123 local 100.66.76.31 ttl 255
-sudo ip addr add 192.168.10.1/30 dev gre1
+sudo ip tunnel add gre1 mode gre remote 100.71.85.65 local 100.66.76.31 ttl 255
+sudo ip addr add 192.168.10.1/29 dev gre1
 sudo ip link set gre1 up
 # sudo ip link set gre1 mtu 9100
 # sudo ip link set gre1 txqueuelen 10000
 # sudo ip tunnel del gre1
 ```
 
-| Name  | Example | Comments |
-|-------|-----|--------|
-| GRE Tunnel2 - SIP  | 100.66.76.31  | WAN-SIM Loopback1 IP address, need advertise to LAN |
-| GRE Tunnel2 - DIP | 100.71.85.124  | TOR2 BMC_Mgmt_125 IP |
-| GRE Tunnel2 - IP | 192.168.10.5/30  | Private per session, can be reused   |
-
-```bash
-sudo ip tunnel add gre2 mode gre remote 100.71.85.124 local 100.66.76.31 ttl 255
-sudo ip addr add 192.168.10.5/30 dev gre2
-sudo ip link set gre2 up
-# sudo ip link set gre2 mtu 9100
-# sudo ip link set gre2 txqueuelen 10000
-# sudo ip tunnel del gre2
-```
 
 #### TOR1
 | Name  | Example | Comments |
 |-------|-----|--------|
-| GRE Tunnel - SIP  | 100.71.85.123  | TOR BMC_Mgmt_125 VIP (Has to be IP not Vlan125) |
+| GRE Tunnel - SIP  | 100.71.85.65  | TOR BMC_Mgmt_125 VIP (Has to be IP not Vlan125) |
 | GRE Tunnel - DIP | 100.66.76.31  | WAN-SIM Loopback1 IP address |
-| GRE Tunnel - IP | 192.168.10.2/30  | Private per session, can be reused.   |
+| GRE Tunnel - IP | 192.168.10.2/29  | Private per session, can be reused.   |
 
 ```config
 interface Tunnel1
-  ip address 192.168.10.2/30
-  tunnel source 100.71.85.123
+  ip address 192.168.10.2/29
+  tunnel source 100.71.85.65
   tunnel destination 100.66.76.31
   mtu 9100
   bandwidth 10000000
@@ -101,14 +87,14 @@ interface Tunnel1
 #### TOR2
 | Name  | Example | Comments |
 |-------|-----|--------|
-| GRE Tunnel - SIP  | 100.71.85.124  | TOR BMC_Mgmt_125 VIP (Has to be IP not Vlan125) |
+| GRE Tunnel - SIP  | 100.71.85.65  | TOR BMC_Mgmt_125 VIP (Has to be IP not Vlan125) |
 | GRE Tunnel - DIP | 100.66.76.31  | WAN-SIM Loopback1 IP address |
-| GRE Tunnel - IP | 192.168.10.6/30  | Private per session, can be reused.   |
+| GRE Tunnel - IP | 192.168.10.3/29  | Private per session, can be reused.   |
 
 ```config
 interface Tunnel1
-  ip address 192.168.10.6/30
-  tunnel source 100.71.85.124
+  ip address 192.168.10.3/29
+  tunnel source 100.71.85.65
   tunnel destination 100.66.76.31
   mtu 9100
   bandwidth 10000000
@@ -203,11 +189,25 @@ router bgp 65242
 ```
 feature sla sender
 ip sla 1
-  icmp-echo 192.168.10.1 source-ip 192.168.30.2
+  icmp-echo 192.168.10.1 source-ip 192.168.10.2
     frequency 5
 ip sla schedule 1 life forever start-time now
 track 1 ip sla 1 reachability
 
+```
+
+### Rules
+```bash
+# Delay + Random
+sudo tc qdisc add dev eth0 root netem delay 100ms 50ms 30%
+# Loss
+sudo tc qdisc add dev eth0 root netem loss 10%
+# BW
+sudo tc qdisc add dev eth0 root netem rate 500mbit
+## View Current Config
+sudo tc qdisc show dev eth0
+## Remove All
+sudo tc qdisc del dev eth0 root
 ```
 
 ## Contributing
