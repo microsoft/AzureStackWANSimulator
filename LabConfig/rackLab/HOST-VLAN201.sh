@@ -71,3 +71,21 @@ scp test00.txt administrator@100.71.55.119:/home/administrator/Downloads/
 # sudo ip route add 0.0.0.0/0 via 100.73.7.1 dev ens3
 # # sudo ip route del 0.0.0.0/0 via 100.73.7.1 dev ens3
 # # sudo ip route add 100.73.7.0/25 via 20.0.0.0
+
+
+
+# sudo nano /etc/netplan/01-network-manager-all.yaml 
+network:
+  version: 2
+  renderer: NetworkManager
+  ethernets:
+    ens6f0np0:
+      dhcp4: false
+      addresses: [100.69.177.11/24]
+      mtu: 9216
+      routes:
+        - to: 0.0.0.0/0
+          via: 100.69.177.1
+      nameservers:
+        addresses: [10.50.10.50, 8.8.8.8]
+sudo netplan apply
