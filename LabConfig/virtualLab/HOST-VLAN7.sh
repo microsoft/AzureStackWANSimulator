@@ -1,6 +1,6 @@
 # Init
 sudo apt-get update
-sudo apt-get install -y net-tools iperf3 traceroute
+sudo apt-get install -y net-tools iperf3 traceroute lldpd
 NEW_HOSTNAME="HOST-VLAN7"
 sudo hostnamectl set-hostname $NEW_HOSTNAME
 sudo reboot
@@ -57,7 +57,7 @@ network:
 
 # sudo netplan apply
 cat /proc/net/bonding/bond0
-
+# https://www.ibm.com/docs/en/linux-on-systems?topic=recommendations-bonding-modes
 
 # Config Interface
 sudo ifconfig ens3 100.73.7.11 netmask 255.255.255.0

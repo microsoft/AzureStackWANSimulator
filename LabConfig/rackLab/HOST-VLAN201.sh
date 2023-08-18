@@ -15,10 +15,10 @@ network:
   ethernets:
     ens6f0np0:
       dhcp4: false
-      mtu: 9216
+      # mtu: 9216
     ens6f1np1:
       dhcp4: false
-      mtu: 9216
+      # mtu: 9216
   bonds:
     bond0:
       dhcp4: no
@@ -29,8 +29,7 @@ network:
       addresses:
         - 100.69.177.11/24
       parameters:
-        mode: active-backup
-        # mode: balance-alb
+        mode: balance-xor
         mii-monitor-interval: 100
       routes:
         - to: 0.0.0.0/0

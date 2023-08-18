@@ -98,7 +98,8 @@ ip prefix-list ExternalPrefix seq 15 permit 0.0.0.0/0
 ip prefix-list ExternalPrefix seq 20 deny 0.0.0.0/0 le 32
 ```
 
-#### Default Route
+#### Static Route
+WAN-SIM Loopback ip address has to be configured to established the GRE tunnel, otherwise will have error `Tunnel1 is down (No route to tunnel destination address)`.
 ```
 # TOR1
 ip route 0.0.0.0/0 Tunnel1 track 1
