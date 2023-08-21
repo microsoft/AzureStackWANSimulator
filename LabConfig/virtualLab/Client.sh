@@ -1,6 +1,6 @@
 # Init
 sudo apt-get update
-sudo apt-get install -y net-tools iperf3 traceroute
+sudo apt-get install -y net-tools iperf3 traceroute lldpd
 NEW_HOSTNAME="Client"
 sudo hostnamectl set-hostname $NEW_HOSTNAME
 sudo reboot
@@ -17,6 +17,7 @@ sudo ip route add 0.0.0.0/0 via 172.16.0.1 dev ens3
 ## Config
 ### Delay + Loss
 sudo tc qdisc add dev ens3 root netem delay 100ms 50ms 30% loss 10%
+sudo tc qdisc add dev ens3 root netem loss 100%
 ### BW Limitation
 sudo tc qdisc add dev ens3 root netem rate 500kbit
 # sudo tc qdisc add dev ens3 root tbf rate 1mbit burst 1600 latency 50ms

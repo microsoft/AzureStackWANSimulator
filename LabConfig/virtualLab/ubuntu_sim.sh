@@ -82,3 +82,38 @@ sudo tc qdisc add dev ens3 root netem delay 100ms 50ms 30% loss 10% rate 500kbit
 sudo tc qdisc show dev ens3
 ## Remove All
 sudo tc qdisc del dev ens3 root
+
+
+# Rule per subnet
+sudo tc qdisc add dev ens3 root handle 1:0 prio
+sudo tc qdisc add dev ens3 parent 1:1 handle 10:0 netem loss 100%
+sudo tc filter add dev ens3 protocol ip parent 1:0 prio 1 u32 match ip src 100.73.125.0/24 flowid 1:2
+sudo tc filter add dev ens3 protocol ip parent 1:0 prio 2 u32 match ip src 100.73.0.0/16 flowid 1:1
+
+# Rule last 1m, at does not have seconds option
+echo "sudo tc qdisc del dev ens3 root" | at now + 1 minute
+# Trick to use seconds
+# sleep 10s && echo "sudo tc qdisc del dev ens3 root" | at now
+# show at tasks
+atq
+
+tc -s -d qdisc show dev ens3
+tc filter show
+
+
+# Appendix
+#!/bin/bash
+
+# Apply 50% packet loss to subnet A (10.0.0.0/24)
+sudo tc qdisc add dev eth0 root handle 1: prio
+sudo tc qdisc add dev eth0 parent 1:1 handle 10: netem loss 50% delay 0ms
+sudo tc filter add dev eth0 protocol ip parent 1:0 prio 1 u32 match ip src 10.0.0.0/24 flowid 1:1
+
+# Apply 100ms delay to subnet B (10.0.1.0/24)
+sudo tc qdisc add dev eth0 parent 1:2 handle 20: netem delay 100ms
+sudo tc filter add dev eth0 protocol ip parent 1:0 prio 2 u32 match ip src 10.0.1.0/24 flowid 1:2
+sudo tc filter add dev eth0 protocol ip parent 1:0 prio 2 u32 match ip src 10.0.3.0/24 flowid 1:2
+
+# Apply 500kbit rate limit to subnet C (10.0.2.0/24)
+sudo tc qdisc add dev eth0 parent 1:3 handle 30: tbf rate 500kbit burst 1600 limit 3000
+sudo tc filter add dev eth0 protocol ip parent 1:0 prio 3 u32 match ip src 10.0.2.0/24 flowid 1:3
