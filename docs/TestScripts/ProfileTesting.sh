@@ -76,21 +76,23 @@ if [ -z "$2" ]; then
   iperf3_test $Iperf3SvrIP 4
   ## 8 thread
   iperf3_test $Iperf3SvrIP 8
+  ## 16 thread
+  iperf3_test $Iperf3SvrIP 16
 else
   iperf3_test $Iperf3SvrIP $2 $3
 fi
 
-iperf3 -c 172.16.0.11 -i 1 -t 3 -P 2 
-iperf3 -c 172.16.0.11 -i 1 -t 3 | grep -Po '[0-9.]*.(?:M|K|)bits\/sec'
+# iperf3 -c 172.16.0.11 -i 1 -t 3 -P 2 
+# iperf3 -c 172.16.0.11 -i 1 -t 3 | grep -Po '[0-9.]*.(?:M|K|)bits\/sec'
 
-iperf3 -c 172.16.0.11 -P 2 -t 5 -i 1 --logfile ./ProfileTestLog/test.log
+# iperf3 -c 172.16.0.11 -P 2 -t 5 -i 1 --logfile ./ProfileTestLog/test.log
 
-DelayBase="100ms"
-DelayRandom="50ms"
-DelayRandomPercent="30%"
-sudo tc qdisc add dev $INTF root netem delay $DelayBase $DelayRandom $DelayRandomPercent
+# DelayBase="100ms"
+# DelayRandom="50ms"
+# DelayRandomPercent="30%"
+# sudo tc qdisc add dev $INTF root netem delay $DelayBase $DelayRandom $DelayRandomPercent
 
 
-sudo tc qdisc add dev eth0 root netem delay $DelayBase $DelayRandom $DelayRandomPercent
+# sudo tc qdisc add dev eth0 root netem delay $DelayBase $DelayRandom $DelayRandomPercent
 
-ssh user@remote_host 'command'
+# ssh user@remote_host 'command'

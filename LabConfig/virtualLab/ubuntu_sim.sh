@@ -93,7 +93,7 @@ sudo tc filter add dev ens3 protocol ip parent 1:0 prio 2 u32 match ip src 100.7
 # Rule last 1m, at does not have seconds option
 echo "sudo tc qdisc del dev ens3 root" | at now + 1 minute
 # Trick to use seconds
-# sleep 10s && echo "sudo tc qdisc del dev ens3 root" | at now
+# sleep 10s && sudo tc qdisc del dev ens3 root
 # show at tasks
 atq
 
