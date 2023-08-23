@@ -115,8 +115,8 @@ if [ -z "$2" ]; then
   tc_rule_apply "Broadband" $Intf $Broadband
   ## Satellite Rule
   tc_rule_apply "Satellite" $Intf $Satellite_Download $Satellite_Latency $Satellite_Loss
-else
-  tc_rule_apply $2 $Intf $3 $4 $5 $6
+# else
+#   tc_rule_apply $2 $Intf $3 $4 $5 $6
 fi
 
 echo "********** WAN-SIM iPerf3 Result **********"
