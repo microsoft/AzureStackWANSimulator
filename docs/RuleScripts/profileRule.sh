@@ -22,7 +22,7 @@ Username="cisco"
 PrivateKeyPath="/home/cisco/.ssh/wansimkey"
 iperf3TestScript="./iperf3Test.sh"
 
-logDir="wansimlog"
+logDir="WANSIMLog"
 logFileName="wansim_result.log"
 logFilePath="./$logDir/$logFileName"
 
@@ -58,6 +58,7 @@ function tc_rule_apply()
   local LossRate=${5}
   local RuleSeconds=${6:-60}
 
+  sudo tc qdisc del dev $Intf root
   echo "Profile $1 - $(date)" | tee -a $logFilePath
 
   if [[ -n "$1" && -n "$2" && -n "$3" && -z "$4" && -z "$5" ]]; then
@@ -115,7 +116,7 @@ if [ -z "$2" ]; then
   ## Satellite Rule
   tc_rule_apply "Satellite" $Intf $Satellite_Download $Satellite_Latency $Satellite_Loss
 else
-  tc_rule_apply $Intf $2 $3 $4 $5
+  tc_rule_apply $2 $Intf $3 $4 $5 $6
 fi
 
 echo "********** WAN-SIM iPerf3 Result **********"

@@ -7,9 +7,9 @@
 
 # Initialize Variables
 Iperf3SvrIP=${1:-"172.16.0.11"}
-logDir="wansimlog"
-strPingTest="PingTest"
-strPerf3Test="Perf3Test"
+logDir="WANSIMLog"
+strPingTest="pingTest"
+strPerf3Test="iPerf3Test"
 SumLogFileName="SumResult.log"
 
 ErrorInvalidIPv4="Invalid or missing remote host IP address."
@@ -41,7 +41,8 @@ function iperf3_test()
   local logFileName="$strPerf3Test-$Connections.log"
   local logFilePath="./$logDir/$logFileName"
 
-  iperf3 -c $Iperf3SvrIP -P $Connections -t $TestSeconds -i 1 --logfile $logFilePath
+  # Sleep 3 seconds to make sure last test finished
+  sleep 3 && iperf3 -c $Iperf3SvrIP -P $Connections -t $TestSeconds -i 1 --logfile $logFilePath
 
   if [ -e "$logFilePath" ]; then
     echo "iperf3 -c $Iperf3SvrIP -P $Connections -t $TestSeconds -i 1 --logfile $logFilePath" >> $logFilePath
