@@ -59,7 +59,7 @@ function tc_rule_apply()
   local LossRate=${5}
   local RuleSeconds=${6:-60}
 
-  echo "Profile $1 - $(date)" | tee -a $logFilePath
+  echo "# Profile $1 - $(date)" | tee -a $logFilePath
 
   if [[ -n "$1" && -n "$2" && -n "$3" && -z "$4" && -z "$5" ]]; then
     ## BW Limitation Rule Only
@@ -103,7 +103,7 @@ else
 fi
 
 # SCP Test Script to Remote Host
-scp -o StrictHostKeyChecking=no -i $PrivateKeyPath $iperf3TestScript $Username@$RemoteTestHostIP:$iperf3TestScript
+sudo scp -o StrictHostKeyChecking=no -i $PrivateKeyPath $iperf3TestScript $Username@$RemoteTestHostIP:$iperf3TestScript
 
 # Clear all the previous rule if any
 sudo tc qdisc del dev $Intf root > /dev/null 2>&1
@@ -121,5 +121,5 @@ if [ -z "$2" ]; then
 #   tc_rule_apply $2 $Intf $3 $4 $5 $6
 fi
 
-echo "********** WAN-SIM iPerf3 Result **********"
+echo "########## WAN-SIM iPerf3 Result ##########"
 cat $logFilePath
