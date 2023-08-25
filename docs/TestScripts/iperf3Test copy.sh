@@ -100,3 +100,4 @@ if [ -z "$2" ]; then
 else
   iperf3_test $Iperf3SvrIP $2 $3
 fi
+

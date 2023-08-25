@@ -4,16 +4,12 @@
 import paramiko
 import time
 
-REMOTE_HOST="100.69.177.11"
-USERNAME="administrator"
-PASSWORD="!!123abc"
-PRIVATE_KEY="./wansimkey"
+REMOTE_HOST="100.73.7.11"
+USERNAME="cisco"
+PASSWORD="cisco"
+PRIVATE_KEY="/home/cisco/.ssh/wansimkey"
 
-COMMANDS = ['pwd', 'ls -l','./iperf3Test.sh 100.71.0.244']
-
-# Source and destination paths for SCP
-local_path = 'path_to_local_file'
-remote_path = 'path_to_remote_directory'
+COMMANDS = ['pwd', 'ls -l']
 
 # Create an SSH client
 ssh = paramiko.SSHClient()
@@ -39,15 +35,6 @@ for command in COMMANDS:
 
 # Print the output of the command
 print(stdout.read().decode())
-
-# Use SCP to upload a local file to the remote host
-sftp = ssh_client.open_sftp()
-sftp.put(local_path, remote_path)
-sftp.close()
-
-# Use SCP to download a remote file to the local host
-# sftp.get(remote_path, local_path)
-
 
 # Close the SSH connection. Need more time to close, so use sleep to avoid exceptions.
 time.sleep(5)

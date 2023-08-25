@@ -7,10 +7,10 @@
 # 4. Remove the rules with timer
 
 # Initialize Variables
-Intf=${1:-"eth0"}
-RemoteTestHostIP="100.69.177.11"
-Iperf3SvrIP="100.71.0.244"
-Username="administrator"
+Intf=${1:-"ens3"}
+RemoteTestHostIP="100.73.7.11"
+Iperf3SvrIP="172.16.0.11"
+Username="cisco"
 PrivateKeyPath="./wansimkey"
 iperf3TestScript="./iperf3Test.sh"
 
@@ -41,13 +41,13 @@ function interface_exists() {
   fi
 }
 
+function ssh_remote_cmd()
+{
+  local CMD=${1:-"pwd"}
 
-function ssh_remote_cmd() {
-  ssh_cmd="ssh -o StrictHostKeyChecking=no -i $PrivateKeyPath $Username@$RemoteTestHostIP"
-
-  $ssh_cmd "chmod +x $iperf3TestScript"
-  $ssh_cmd "./$iperf3TestScript $Iperf3SvrIP"
-}
+  ssh -o StrictHostKeyChecking=no -i $PrivateKeyPath $Username@$RemoteTestHostIP "sudo chmod 755 $iperf3TestScript"
+  ssh -o StrictHostKeyChecking=no -i $PrivateKeyPath $Username@$RemoteTestHostIP "sudo ./$iperf3TestScript $Iperf3SvrIP"
+} 
 
 
 # NETEM Rule Template
@@ -80,7 +80,7 @@ function tc_rule_apply()
   ssh_remote_cmd | tee -a $logFilePath
   sleep $RuleSeconds && sudo tc qdisc del dev $Intf root
 
-  sudo scp -r -o StrictHostKeyChecking=no -i $PrivateKeyPath $Username@$RemoteTestHostIP:"./$logDir/" "./$logDir/$1/"
+  sudo scp -r -o StrictHostKeyChecking=no -i $PrivateKeyPath $Username@$RemoteTestHostIP:"./$logDir/" "./$logDir/$1/" > /dev/null 2>&1
 }
 
 # Main
@@ -103,18 +103,18 @@ else
 fi
 
 # SCP Test Script to Remote Host
-scp -o StrictHostKeyChecking=no -i $PrivateKeyPath $iperf3TestScript $Username@$RemoteTestHostIP:$iperf3TestScript
+sudo scp -o StrictHostKeyChecking=no -i $PrivateKeyPath $iperf3TestScript $Username@$RemoteTestHostIP:$iperf3TestScript
 
 # Clear all the previous rule if any
 sudo tc qdisc del dev $Intf root > /dev/null 2>&1
 # Customized testing or Pre-Profile Testing
 if [ -z "$2" ]; then
-  ## Broadband Rule
-  tc_rule_apply "Broadband" $Intf $Broadband
   ## T1 Rule
   tc_rule_apply "T1" $Intf $T1 
   ## E1 Rule
   tc_rule_apply "E1" $Intf $E1 
+  ## Broadband Rule
+  tc_rule_apply "Broadband" $Intf $Broadband
   ## Satellite Rule
   tc_rule_apply "Satellite" $Intf $Satellite_Download $Satellite_Latency $Satellite_Loss
 # else
