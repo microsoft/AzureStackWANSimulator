@@ -36,8 +36,6 @@ ip forwarding
 
 hostname s46r23-ubuntu
 log syslog informational
-no ip forwarding
-no ipv6 forwarding
 service integrated-vtysh-config
 !
 ip route 100.69.177.0/25 gre1
