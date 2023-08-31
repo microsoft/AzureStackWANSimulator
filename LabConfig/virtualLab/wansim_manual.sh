@@ -32,6 +32,8 @@ service integrated-vtysh-config
 !
 ip route 100.73.7.0/25 gre1
 ip route 100.73.7.0/25 gre2
+ip route 100.73.8.0/25 gre1
+ip route 100.73.8.0/25 gre2
 !
 router bgp 65003
  bgp router-id 11.11.11.11
@@ -121,3 +123,24 @@ sudo tc filter add dev eth0 protocol ip parent 1:0 prio 2 u32 match ip src 10.0.
 # Apply 500kbit rate limit to subnet C (10.0.2.0/24)
 sudo tc qdisc add dev eth0 parent 1:3 handle 30: tbf rate 500kbit burst 1600 limit 3000
 sudo tc filter add dev eth0 protocol ip parent 1:0 prio 3 u32 match ip src 10.0.2.0/24 flowid 1:3
+
+
+# Test for IP range - rule for each host
+# Host 100.73.7.11/24 latency 100ms, Host 100.73.7.12/24 BW 50kbit
+sudo tc qdisc add dev ens3 root handle 1: prio
+sudo tc qdisc add dev ens3 parent 1:1 handle 10: netem delay 100ms
+sudo tc qdisc add dev ens3 parent 1:2 handle 20: tbf rate 50kbit burst 1600 limit 3000
+sudo tc filter add dev ens3 protocol ip parent 1:0 prio 1 u32 match ip src 100.73.7.11/32 flowid 1:1
+sudo tc filter add dev ens3 protocol ip parent 1:0 prio 2 u32 match ip src 100.73.7.12/32 flowid 1:2
+sudo tc filter add dev ens3 protocol ip parent 1:0 prio 3 u32 match ip dst 0.0.0.0/0 flowid 1:3
+
+sudo tc -s qdisc show dev ens3
+
+sudo tc class show dev ens3
+
+sudo tc qdisc del dev ens3 root
+
+# cisco@ubuntu:~$ sudo tc class show dev ens3
+# class prio 1:1 parent 1: leaf 10: 
+# class prio 1:2 parent 1: leaf 20: 
+# class prio 1:3 parent 1: 

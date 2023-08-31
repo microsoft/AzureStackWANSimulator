@@ -1,7 +1,7 @@
 # Init
 sudo apt-get update
-sudo apt-get install -y net-tools iperf3 traceroute
-NEW_HOSTNAME="HOST-VLAN8"
+sudo apt-get install -y net-tools iperf3 traceroute lldpd
+NEW_HOSTNAME="HOST1-VLAN8"
 sudo hostnamectl set-hostname $NEW_HOSTNAME
 sudo reboot
 
@@ -30,3 +30,31 @@ sudo tc qdisc del dev ens3 root
 sudo iperf -s
 ## client test
 iperf -c 100.73.7.11 -t 5 -i 1 -w 4m
+
+# sudo nano /etc/netplan/50-cloud-init.yaml 
+network:
+  version: 2
+  ethernets:
+    ens2:
+      dhcp4: true
+    ens3:
+      dhcp4: false
+      mtu: 9216
+    ens4:
+      dhcp4: false
+      mtu: 9216
+  bonds:
+    bond0:
+      dhcp4: no
+      mtu: 9216
+      interfaces:
+        - ens3
+        - ens4
+      addresses:
+        - 100.73.8.11/24
+      parameters:
+        mode: balance-alb
+        mii-monitor-interval: 100
+      routes:
+        - to: 0.0.0.0/0
+          via: 100.73.8.1

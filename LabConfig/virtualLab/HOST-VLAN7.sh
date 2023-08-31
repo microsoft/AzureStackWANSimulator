@@ -3,7 +3,7 @@ sudo apt-get update
 sudo apt-get install -y net-tools iperf3 traceroute lldpd
 NEW_HOSTNAME="HOST-VLAN7"
 sudo hostnamectl set-hostname $NEW_HOSTNAME
-sudo reboot
+# sudo reboot
 
 # Apply Rule
 ## Config
@@ -47,7 +47,7 @@ network:
         - ens3
         - ens4
       addresses:
-        - 100.73.7.11/24
+        - 100.73.7.12/24
       parameters:
         mode: balance-alb
         mii-monitor-interval: 100
