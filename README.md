@@ -1,30 +1,39 @@
 # Azure Stack WAN Simulator Project
 > This repo is current private only, and will open to public once fully reviewed.
 
-## Project Overview
+## Background
 
-To better support different Azure Stack profile service, an automated customized traffic control validation meachinsim need to be developed and deployed to suit rapid growth product request. 
+To better support Azure Edge services, by having an automated customized traffic control validation mechanism and deployed to suit rapid growth product request. 
 
-### Main Components
-#### SONiC
-- [Images](https://github.com/sonic-net/sonic-buildimage)
-- [USER MANUAL](https://github.com/sonic-net/SONiC/blob/master/doc/SONiC-User-Manual.md)
-- [Sonic VHDX Download](https://aka.ms/azssonic)
+This WAN-SIM Solution will help to validate scenarios that matches customer's network (T1,E1,Satellite,etc.) by customize network traffic control variables.
 
-#### Network Emulator
-[Using NetEm to Emulate Networks](https://srtlab.github.io/srt-cookbook/how-to-articles/using-netem-to-emulate-networks.html#:~:text=NetEm%28Network%20Emulator%29%20is%20an%20enhancement%20of%20the%20Linux,Differentiated%20Services%20%28diffserv%29%20facilities%20in%20the%20Linux%20kernel)
+#### Before WAN-SIM Solution
+- Lab design is high bandwidth, low latency.
+- Edge customers networks are low bandwidth, high latency, and more unstable.
 
-#### Standard DataFlow
+![Before WAN-SIM Solution](./../img/../AzureStackWANSimulator/img/Before_WANSIM_Solution.gif)
 
-In standard deployment, it is hard to automate the traffic control rules in the data path.
+#### After WAN-SIM Solution
+- Reroute cluster traffic to WAN-SIM VM, which is a ubuntu VM with FRRouting installed.
+- Use NETEM to apply rules on WAN-SIM to control traffic.
+- GRE Tunnel between WAN-SIM and TOR Switches.
+- Less touch points and easy to integrate with CICD and telemetry.
 
-```mermaid
-flowchart LR
+![After WAN-SIM Solution](./../img/../AzureStackWANSimulator/img/After_WANSIM_Solution.gif)
 
-A[Client] <--> |Routing| B(Border-Switch)
-B(Border-Switch) <--> |eBGP| C(TOR-Switch)
-C(TOR-Switch) <--> |VLAN| D[VM-Host]
-```
+
+## Quick Start
+Overall, there are four main steps:
+- [Setup WAN-SIM VM](./docs/WANSIM_VM_Setup.md)
+- [Update Azure Stack Edge Switch Configuration](./docs/AzureStackEdge_Switch_Config.md)
+- [Define and Apply Network Profile Rule on WAN-SIM VM](./docs/Network_Profile_Definition.md)
+- [Validation Network Profile Rule End-to-End](./docs/Network_Profile_Validation.md)
+
+## Reference
+- [Using NetEm to Emulate Networks](https://srtlab.github.io/srt-cookbook/how-to-articles/using-netem-to-emulate-networks.html#:~:text=NetEm%28Network%20Emulator%29%20is%20an%20enhancement%20of%20the%20Linux,Differentiated%20Services%20%28diffserv%29%20facilities%20in%20the%20Linux%20kernel)
+- [FRRouting](https://github.com/FRRouting/frr)
+- [iPerf](https://iperf.fr/iperf-doc.php)
+- [Telegraf Agent for Telemetry](https://github.com/influxdata/telegraf)
 
 
 ## Contributing
