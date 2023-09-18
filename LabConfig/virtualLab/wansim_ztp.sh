@@ -1,12 +1,12 @@
 # Init
 sudo apt-get update
-sudo apt-get install -y net-tools frr iperf3 traceroute
-# HOSTNAME="WAN-SIM"
-# sudo hostnamectl set-hostname $HOSTNAME
-# sudo reboot
+sudo apt-get install -y net-tools frr iperf3 traceroute lldpd
+HOSTNAME="WAN-SIM"
+sudo hostnamectl set-hostname $HOSTNAME
+# sudo nano /etc/hosts
 
 # Config Interface
-sudo cp ./30_netplan_init.yaml /etc/netplan/30_netplan_init.yaml
+sudo cp ./30_netplan_wansim.yaml /etc/netplan/30_netplan_wansim.yaml
 sudo netplan apply
 
 # Config FRR
