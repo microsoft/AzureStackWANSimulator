@@ -11,7 +11,7 @@ This WAN-SIM Solution will help to validate scenarios that matches customer's ne
 - Lab design is high bandwidth, low latency.
 - Edge customers networks are low bandwidth, high latency, and more unstable.
 
-![Before WAN-SIM Solution](/img/Before_WANSIM_Solution.gif)
+![Before WAN-SIM Solution](/img/before_wansim_solution.png)
 
 #### After WAN-SIM Solution
 - Reroute cluster traffic to WAN-SIM VM, which is a ubuntu VM with FRRouting installed.
@@ -19,7 +19,7 @@ This WAN-SIM Solution will help to validate scenarios that matches customer's ne
 - GRE Tunnel between WAN-SIM and TOR Switches.
 - Less touch points and easy to integrate with CICD and telemetry.
 
-![After WAN-SIM Solution](/img/After_WANSIM_Solution.gif)
+![After WAN-SIM Solution](/img/after_wansim_solution.png)
 
 
 ## Quick Start
