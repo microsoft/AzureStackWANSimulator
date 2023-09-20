@@ -23,11 +23,10 @@ This WAN-SIM Solution will help to validate scenarios that matches customer's ne
 
 
 ## Quick Start
-Overall, there are four main steps:
+Overall, here are main steps:
 1. [Setup WAN-SIM VM](./docs/WANSIM_VM_Setup.md)
 2. [Update Azure Stack Edge Switch Configuration](./docs/AzureStackEdge_Switch_Config.md)
-3. [Define and Apply Network Profile Rule on WAN-SIM VM](./docs/Network_Profile_Definition.md)
-4. [Validation Network Profile Rule End-to-End](./docs/Network_Profile_Validation.md)
+3. [Define and Validation Network Profile Rule End-to-End](./docs/Network_Profile_Definition_Validation.md)
 
 ## Reference
 - [Using NetEm to Emulate Networks](https://srtlab.github.io/srt-cookbook/how-to-articles/using-netem-to-emulate-networks.html#:~:text=NetEm%28Network%20Emulator%29%20is%20an%20enhancement%20of%20the%20Linux,Differentiated%20Services%20%28diffserv%29%20facilities%20in%20the%20Linux%20kernel)

@@ -1,36 +1,31 @@
-# /etc/netplan/30_netplan_wansim.yaml
 network:
   version: 2
-  renderer: NetworkManager
+  renderer: networkd
   ethernets:
-    lo:
+    ens3:
       addresses:
-      - 127.0.0.1/8
-      - "::1/128"
-      - 11.11.11.11/32
-    eth0:
-      addresses:
-      - 100.71.60.125/26
+        - 10.0.0.10/30
       mtu: 9216
       routes:
-      - to: 0.0.0.0/0
-        via: 100.71.60.65
-      nameservers:
-        addresses:
-        - 10.50.10.50
-        - 8.8.8.8
+        - to: 0.0.0.0/0
+          via: 10.0.0.9
+    lo:
+      addresses:
+        - 127.0.0.1/8
+        - '::1/128'
+        - 11.11.11.11/32
   tunnels:
     gre1:
       mode: gre
-      local: 100.66.76.31
-      remote: 100.71.85.123
+      local: 11.11.11.11
+      remote: 100.73.125.2
       addresses:
-      - 192.168.10.0/31
+        - 20.0.0.0/31
       mtu: 9000
     gre2:
       mode: gre
-      local: 100.66.76.31
-      remote: 100.71.85.124
+      local: 11.11.11.11
+      remote: 100.73.125.3
       addresses:
-      - 192.168.10.2/31
+        - 20.0.0.2/31
       mtu: 9000
