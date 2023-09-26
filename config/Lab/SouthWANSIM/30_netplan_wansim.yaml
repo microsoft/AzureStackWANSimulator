@@ -1,0 +1,35 @@
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eth0:
+      addresses:
+        - 10.10.37.4/24
+      mtu: 9216
+      nameservers:
+        addresses:
+        - 10.10.240.23
+        - 10.10.240.24
+      routes:
+        - to: 0.0.0.0/0
+          via: 10.10.37.1
+    lo:
+      addresses:
+        - 127.0.0.1/8
+        - '::1/128'
+        - 10.10.32.193/32
+  tunnels:
+    gre1:
+      mode: gre
+      local: 10.10.32.193
+      remote: 100.71.85.123
+      addresses:
+        - 3.1.1.0/31
+      mtu: 9000
+    gre2:
+      mode: gre
+      local: 10.10.32.193
+      remote: 100.71.85.124
+      addresses:
+        - 3.1.1.2/31
+      mtu: 9000
