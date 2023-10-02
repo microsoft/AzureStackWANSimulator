@@ -131,6 +131,52 @@ WAN-SIM# show ip bgp neighbors 10.0.0.9 advertised-routes
 Total number of prefixes 4
 ```
 
+#### Show LLDP Neighbors
+```bash
+admin@host:~$ lldpctl
+-------------------------------------------------------------------------------
+LLDP neighbors:
+-------------------------------------------------------------------------------
+Interface:    ens6f0np0, via: LLDP, RID: 1, Time: 20 days, 18:32:03
+  Chassis:
+    ChassisID:    mac ac:3a:67:32:ca:xx
+    SysName:      TOR-a
+    SysDescr:     Cisco Nexus Operating System (NX-OS) Software 10.2(5)
+                  TAC support: http://www.cisco.com/tac
+                  Copyright (c) 2002-2023, Cisco Systems, Inc. All rights reserved.
+    Capability:   Bridge, on
+    Capability:   Router, on
+  Port:
+    PortID:       ifname Ethernet1/1
+    PortDescr:    Ethernet1/1
+    TTL:          120
+  VLAN:         201, pvid: yes
+  Unknown TLVs:
+    TLV:          OUI: 00,01,42, SubType: 1, Len: 1 01
+    TLV:          OUI: 00,01,42, SubType: 8, Len: 11 46,44,4F,32,34,31,33,30,46,4D,41
+-------------------------------------------------------------------------------
+Interface:    ens6f1np1, via: LLDP, RID: 2, Time: 20 days, 18:31:59
+  Chassis:
+    ChassisID:    mac ac:3a:67:32:ca:xx
+    SysName:      TOR-b
+    SysDescr:     Cisco Nexus Operating System (NX-OS) Software 10.2(5)
+                  TAC support: http://www.cisco.com/tac
+                  Copyright (c) 2002-2023, Cisco Systems, Inc. All rights reserved.
+    Capability:   Bridge, on
+    Capability:   Router, on
+  Port:
+    PortID:       ifname Ethernet1/1
+    PortDescr:    Ethernet1/1
+    TTL:          120
+  VLAN:         201, pvid: yes
+  Unknown TLVs:
+    TLV:          OUI: 00,01,42, SubType: 1, Len: 1 01
+    TLV:          OUI: 00,01,42, SubType: 8, Len: 11 46,44,4F,32,34,31,33,30,32,59,39
+-------------------------------------------------------------------------------
+```
+
+
+
 ## Q&A
 ### Does WAN-SIM VM has to be stay in the same data center of Azure Stack Cluster?
 In therory, no, because unless the GRE tunnels  and BGP can be established, the WAN-SIM solution can be applied. However, to have better network profile rule control, it would be good to install in the same location with Azure Stack Cluster.
