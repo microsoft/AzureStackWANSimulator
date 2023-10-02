@@ -21,6 +21,8 @@ The key parts for this design are:
 - Set local-preference higher than uplink router to be the best route.
 - No routes should be sent to WAN-SIM to avoid routing loop.
 
+> Suggest to config switches first before config frr BGP establish on WANSIM, because it could cause default routing loop (WANSIM default to Uplink border). 
+
 ## Post-Validation
 ### Ping
 Ping remote host or public dns.
