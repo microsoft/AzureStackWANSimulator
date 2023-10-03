@@ -124,6 +124,11 @@ BGP flapping may be caused by several reasons, but here are two main facts may i
 #### Routing Issue
 - **Routing Loop**: In the setup, because both WANSIM VM and Uplink Border Switch advertise default route to Edge TOR switches, it could be generated the routing loop if the ip prefix-list or route-map not config correctly.
 - **Network Mismatch**: Beside the default route, the Edge TOR switch only accept loopback subnet from Uplink Border switches. Due to BGP network advertise mechanism, the subnet (ip and mask) has to be exact match, so please make sure the subnet be summarized with right mask.
+- **Missing BGP Update Source**: Check the `update-source` and `ebgp-multihop` configuration to match your environment. 
+```
+update-source loopback0
+ebgp-multihop 4
+```
 
 #### MTU Mismatch
 Please double check the MTU on the physical interfaces as well as logic interfaces (GRE tunnels) to make sure they all match its neighbors.
