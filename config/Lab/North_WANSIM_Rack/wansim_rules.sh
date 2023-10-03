@@ -4,7 +4,11 @@ sudo tc qdisc add dev eth0 root handle 1: htb default 10
 sudo tc class add dev eth0 parent 1: classid 1:5 htb rate 1Gbit
 sudo tc filter add dev eth0 protocol ip parent 1:0 prio 1 u32 match ip src 100.68.177.2/32 flowid 1:5
 
-
+## Combination 
+sudo tc qdisc add dev eth0 root handle 1: htb default 10
+sudo tc class add dev eth0 parent 1: classid 1:5 htb rate 500Kbit
+sudo tc qdisc add dev eth0 parent 1:5 handle 10: netem delay 50ms loss 2%
+sudo tc filter add dev eth0 protocol ip parent 1:0 prio 1 u32 match ip src 100.73.7.0/24 flowid 1:5
 
 # Show Rule
 sudo tc -s qdisc show dev eth0
