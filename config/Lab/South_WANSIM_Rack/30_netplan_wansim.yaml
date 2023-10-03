@@ -25,11 +25,11 @@ network:
       remote: 100.71.85.123
       addresses:
         - 3.1.1.0/31
-      mtu: 9000
+      mtu: 8000
     gre2:
       mode: gre
       local: 10.10.32.193
       remote: 100.71.85.124
       addresses:
         - 3.1.1.2/31
-      mtu: 9000
+      mtu: 8000
