@@ -116,3 +116,14 @@ AS1-TOR1# show ip route 0.0.0.0
 0.0.0.0/0, ubest/mbest: 1/0
     *via 20.0.0.0, [20/0], 00:15:14, bgp-65002, external, tag 65003
 ```
+
+
+# Q&A
+### BGP between TOR switches and WANSIM VM is keep flapping, what is the root cause?
+BGP flapping may be caused by several reasons, but here are two main facts may impact the BGP peer establishment.
+#### Routing Issue
+- **Routing Loop**: In the setup, because both WANSIM VM and Uplink Border Switch advertise default route to Edge TOR switches, it could be generated the routing loop if the ip prefix-list or route-map not config correctly.
+- **Network Mismatch**: Beside the default route, the Edge TOR switch only accept loopback subnet from Uplink Border switches. Due to BGP network advertise mechanism, the subnet (ip and mask) has to be exact match, so please make sure the subnet be summarized with right mask.
+
+#### MTU Mismatch
+Please double check the MTU on the physical interfaces as well as logic interfaces (GRE tunnels) to make sure they all match its neighbors.
