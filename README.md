@@ -33,6 +33,7 @@ Overall, here are main steps:
 - [FRRouting](https://github.com/FRRouting/frr)
 - [iPerf](https://iperf.fr/iperf-doc.php)
 - [Telegraf Agent for Telemetry](https://github.com/influxdata/telegraf)
+- [Azure NetworkMonitoring](https://github.com/Azure/NetworkMonitoring/blob/main/AzureCT/PerformanceTesting.md)
 
 
 ## Contributing

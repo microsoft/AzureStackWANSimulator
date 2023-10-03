@@ -4,6 +4,24 @@ The network profile definition is using [NetEm](https://www.linux.org/docs/man8/
 ### NetEM
 [NetEm](https://www.linux.org/docs/man8/tc-netem.html) (Network Emulator) is an enhancement of the Linux traffic control facilities that allow adding delay, packet loss, duplication and other characteristics to packets outgoing from a selected network interface. NetEm uses the existing Quality Of Service (QOS) and Differentiated Services (diffserv) facilities in the Linux kernel. Manual: [Using NetEm to Emulate Networks - SRT CookBook](https://srtlab.github.io/srt-cookbook/how-to-articles/using-netem-to-emulate-networks.html#:~:text=NetEm%28Network%20Emulator%29%20is%20an%20enhancement%20of%20the%20Linux,Differentiated%20Services%20%28diffserv%29%20facilities%20in%20the%20Linux%20kernel)
 
+#### Examples
+- Delay rule
+```bash
+DelayBase="100ms"
+DelayRandom="50ms"
+DelayRandomPercent="30%"
+sudo tc qdisc add dev $INTF root netem delay $DelayBase $DelayRandom $DelayRandomPercent
+```
+- Loss rule
+```bash
+LossPercent="10%"
+sudo tc qdisc add dev $INTF root netem loss $LossPercent
+```
+- Bandwidth limitation rule
+```bash
+BWCap="500mbit"
+sudo tc qdisc add dev $INTF root netem rate $BWCap
+```
 
 ### iPerf
 [iPerf - The TCP, UDP and SCTP network bandwidth measurement tool](https://iperf.fr/) is a tool for active measurements of the maximum achievable bandwidth on IP networks.
@@ -18,6 +36,16 @@ iperf -s
 iperf3 -s
 ```
 > note: the iperf version is not compatiable, so make sure both client and server are running on the same version.
+
+#### Examples
+```bash
+iperf -c $Iperf3SvrIP -t $TestSeconds -i 1 -P $ThreadNum -B $LocalTestIP --logfile ./$logDir/$logFile 
+```
+- Target iPerf2 version server IP `$Iperf3SvrIP`
+- Output the testing while total time `$TestSeconds` and print result every `1`s
+- Run total `$ThreadNum` threads in parallel
+- Specify band local ip `$LocalTestIP` as client
+- Save result to log file `./$logDir/$logFile `
 
 ## Profile Use Cases
 Use a demo lab to demonstrate the profile definition and validation.
