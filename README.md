@@ -1,5 +1,5 @@
 # Azure Stack WAN Simulator Project
-> This repo is current private only, and will open to public once fully reviewed.
+> This repo is still in process but feel free to PR or file issues if any feedback.
 
 ## Background
 
