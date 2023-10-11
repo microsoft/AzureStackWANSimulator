@@ -36,16 +36,17 @@ Overall, here are main steps:
 - [Azure NetworkMonitoring](https://github.com/Azure/NetworkMonitoring/blob/main/AzureCT/PerformanceTesting.md)
 
 ## Q&A
-#### Will this solution break the standard Azure Stack Rack deployment or operation procedure?
+### Will this solution break the standard Azure Stack Rack deployment or operation procedure?
 The simple anwser is `NO`, the solution is only going to reroute and apply traffic rule on the subnets user defined and that is it.
 More detail explainations about the changes:
 - The solution will `NOT` change any existing configuration out of box, but only add extra config specific to the WANSIM solution which only impact the standard Azure Stack Service.
 - All the outgoing traffic (from Azure Stack rack to Internet) will be redirected to WANSIM VM. 
 - However, for incoming traffic (from Internet to Azure Stack rack), only user defined subnets will be redirected to WANSIM VM, all the rest subnets will remain its standard path.
 - Because the outgoing and incoming traffic are both passing through WANSIM VM, the traffic control rule can be applied customized profiles for both downloading and uploading.
+
 To summary, the solution will `NOT` break the existing Azure Stack setup, but only customized the traffic path and rules.
 
-#### How to turn down the solution?
+### How to turn down the solution?
 This solution is based on FRR service, so to free the rack from this solution, simply execute `sudo service frr stop` on WANSIM VM to shutdown routing service on WANSIM.
 
 
