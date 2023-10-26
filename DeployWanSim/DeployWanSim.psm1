@@ -65,14 +65,6 @@ function Write-DeployWanSimLog {
 # Region Exported functions #
 #############################
 
-# Thoughts...
-# 1. I need to be able to deploy a single VM on an HCI Cluster
-# 2. Get login creds from Key Vault.
-# 2. I should validate we can log into it post deployment
-# 3. I should validate Hyper-v is seeing its IP address, Linux Integration Services are installed, etc.
-# 4. Functions should work in our lab, and to be used by customers in their labs.
-# 5. Detect if a VM is already running with the same Name. If it is, return its IP address
-
 function Invoke-WanSimDeployment {
     [CmdletBinding()]
     Param (
@@ -215,7 +207,7 @@ function Invoke-WanSimDeployment {
             }  
         }
 
-
+        # Execute the scriptblock
         $return = Invoke-Command -Session $session -ScriptBlock $scriptBlock
         Write-DeployWanSimLog -Message "Remote scriptblock completed." @logParams
         Write-DeployWanSimLog -Message "Success is '$($return.Success)'" @logParams
@@ -223,7 +215,6 @@ function Invoke-WanSimDeployment {
         foreach ($log in $return.Logs) {
             Write-DeployWanSimLog -Message $log @logParams
         }
-        
         
         $clusterGroups = Get-ClusterGroup -Cluster $DeploymentEndpoint
         if ($WanSimName -in $clusterGroups.Name) {
@@ -248,7 +239,123 @@ function Invoke-WanSimDeployment {
     finally {
         if ($session) {
             Write-DeployWanSimLog -Message "Closing pssession to '$DeploymentEndpoint'" @logParams
-            Remove-PSSession -Session $session
+            $null = Remove-PSSession -Session $session
+        }
+    }  
+}
+
+
+
+function Remove-WanSimVM {
+    [CmdletBinding()]
+    Param (
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $WanSimName,
+
+        # The HCI Cluster or Server to deploy against.
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $DeploymentEndpoint,
+
+        # Credentials to use when connecting to the HCI Cluster or Server.
+        [Parameter(Mandatory = $false)]
+        [System.Management.Automation.PSCredential]
+        $DeploymentEndpointCredential
+       
+    )
+
+    try {
+        $logParams = @{ Function = $MyInvocation.MyCommand.Name; Verbose = $true }
+        Write-DeployWanSimLog -Message "Starting Remove-WanSimVM" @logParams
+
+        Write-DeployWanSimLog -Message "Checking if there is a pssession to '$DeploymentEndpoint'" @logParams
+        $currentSessions = Get-PSSession
+        foreach ($session in $currentSessions) {
+            if ($session.ComputerName -eq $DeploymentEndpoint -and $session.State -eq 'Opened')      {
+                Write-DeployWanSimLog -Message "Using existing Pssesion to '$DeploymentEndpoint'" @logParams
+                $keepSession = $true
+                break
+            }
+            else {
+                Write-DeployWanSimLog -Message "Creating pssession to '$DeploymentEndpoint'" @logParams
+                $session = New-PSSession -ComputerName $DeploymentEndpoint
+                Write-DeployWanSimLog -Message "Pssession created to '$DeploymentEndpoint'" @logParams
+            }
+        }
+
+        Write-DeployWanSimLog -Message "Checking if '$WanSimName' is in the ClusterGroup" @logParams
+        $clusterGroups = Get-ClusterGroup -Cluster $DeploymentEndpoint
+        if ($WanSimName -in $clusterGroups.Name) {
+            Write-DeployWanSimLog -Message "Removing existing VM '$WanSimName' from ClusterGroup" @logParams
+            $null = Remove-ClusterGroup $WanSimName -Cluster $DeploymentEndpoint -Force -RemoveResources -ErrorAction Stop
+        }
+        $scriptBlock = {
+            try {
+                $returnData = @{ 
+                    Logs      = [System.Collections.ArrayList]@() ; 
+                    Success   = $false ; 
+                    IpAddress = $null 
+                }
+                $returnData.Logs.Add("Starting remoteley executed scritpblock.")
+                $vmName = $using:WanSimName
+                $currentVMs = Get-VM 
+                if ($vmName -in $currentVMs.Name) {
+                    $vhdxPath = (Get-VM -VMName $vmName | Select-Object VMId | Get-VHD).Path
+                    Write-DeployWanSimLog -Message "vhdx path is '$vhdxPath'" @logParams
+                    $returnData.Logs.Add("Stopping existing VM '$vmName'")
+                    $null = Stop-VM -Name $vmName -Force
+                    $returnData.Logs.Add("Removing existing VM '$vmName'")
+                    $null = Remove-VM -Name $vmName -Force
+                    $returnData.Logs.Add("Removing existing VHDX '$vhdxPath'")
+                    $null = Remove-Item -Path $vhdxPath -Force
+                    $returnData.Success = $true
+                }
+                else {
+                    $message = "VM '$vmName' does not exist. Nothing to delete"
+                    $returnData.Logs.Add($message)
+                    throw $message
+                }
+                return $returnData
+            }
+            catch {
+
+                # More detailed failure information
+                $file = $_.InvocationInfo.ScriptName
+                $line = $_.InvocationInfo.ScriptLineNumber
+                $exceptionMessage = $_.Exception.Message
+                $errorMessage = "Failure during Remove-WanSimVM. Error: $file : $line >> $exceptionMessage"
+                $returnData.Logs.Add($errorMessage)
+                throw $errorMessage
+            }
+        }
+
+        # Execute the scriptblock
+        $return = Invoke-Command -Session $session -ScriptBlock $scriptBlock
+        Write-DeployWanSimLog -Message "Remote scriptblock completed." @logParams
+        Write-DeployWanSimLog -Message "Success is '$($return.Success)'" @logParams
+        Write-DeployWanSimLog -Message "Logs from pssession are:" @logParams
+        foreach ($log in $return.Logs) {
+            Write-DeployWanSimLog -Message $log @logParams
+        }
+        return $true
+
+    }
+    catch {
+
+        # More detailed failure information
+        $file = $_.InvocationInfo.ScriptName
+        $line = $_.InvocationInfo.ScriptLineNumber
+        $exceptionMessage = $_.Exception.Message
+        $errorMessage = "Failure during Remove-WanSimVM. Error: $file : $line >> $exceptionMessage"
+        Write-DeployWanSimLog -Message $errorMessage @logParams
+        throw $errorMessage
+    }
+    finally {
+        if ($session -and $keepSession -eq $false) {
+            Write-DeployWanSimLog -Message "Closing pssession to '$DeploymentEndpoint'" @logParams
+            $null = Remove-PSSession -Session $session
         }
     }  
 }
