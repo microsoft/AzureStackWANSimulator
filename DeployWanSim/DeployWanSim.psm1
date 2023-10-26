@@ -111,7 +111,7 @@ function Invoke-WanSimDeployment {
 
         if ($ForceRedeploy) {
             Write-DeployWanSimLog -Message "ForceRedeploy is set to true. Removing existing VM '$WanSimName' from ClusterGroup" @logParams
-            Remove-ClusterGroup $WanSimName -Cluster $WanSimName -Force -RemoveResources
+            Remove-ClusterGroup $WanSimName -Cluster $DeploymentEndpoint -Force -RemoveResources
         }
 
         # Scriptblock
