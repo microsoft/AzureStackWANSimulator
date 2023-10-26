@@ -199,7 +199,7 @@ function Invoke-WanSimDeployment {
                 $null = Set-VMMemory -VMName $vmName -DynamicMemoryEnabled $false
                 
                 $returnData.Logs.Add("Starting VM '$vmName'")
-                $null Start-VM -VMName $vmName
+                $null = Start-VM -VMName $vmName
                 $returnData.Success = $true
                 return $returnData
             }
