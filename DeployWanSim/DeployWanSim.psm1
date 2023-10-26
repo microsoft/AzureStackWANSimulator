@@ -109,6 +109,11 @@ function Invoke-WanSimDeployment {
         $session = New-PSSession -ComputerName $DeploymentEndpoint
         Write-DeployWanSimLog -Message "pssession created to '$DeploymentEndpoint'" @logParams
 
+        if ($ForceRedeploy) {
+            Write-DeployWanSimLog -Message "ForceRedeploy is set to true. Removing existing VM '$WanSimName' from ClusterGroup" @logParams
+            Remove-ClusterGroup $WanSimName -Cluster $WanSimName -Force -RemoveResources
+        }
+
         # Scriptblock
         $scriptBlock = {
             try {
@@ -133,6 +138,7 @@ function Invoke-WanSimDeployment {
                         Remove-VM -Name $vmName -Force
                         $returnData.Logs.Add("Removing existing VHDX '$vhdxPath'")
                         Remove-Item -Path $vhdxPath -Force
+
                     }
                     else {
                         $returnData.Logs.Add("ForceRedeploy is set to false. Returning the IP address of the existing VM.")
@@ -210,12 +216,12 @@ function Invoke-WanSimDeployment {
         $return = Invoke-Command -Session $session -ScriptBlock $scriptBlock
         Write-DeployWanSimLog -Message "Remote scriptblock completed." @logParams
         Write-DeployWanSimLog -Message "Success is '$($return.Success)'" @logParams
-        Write-DeployWanSimLog -Message "Logs are:" @logParams
+        Write-DeployWanSimLog -Message "Logs from pssession are:" @logParams
         foreach ($log in $return.Logs) {
             Write-DeployWanSimLog -Message $log @logParams
         }
-        Write-DeployWanSimLog -Message "Adding '$WanSimName' to '$DeploymentEndpoint'" @logParams
-        Add-ClusterVirtualMachineRole -VMName $WanSimName -Cluster $DeploymentEndpoint -Verbose
+        Write-DeployWanSimLog -Message "Adding '$WanSimName' to '$DeploymentEndpoint' as a clustered VM" @logParams
+        $null = Add-ClusterVirtualMachineRole -VMName $WanSimName -Cluster $DeploymentEndpoint -Verbose
         return $true
     }
     catch {
