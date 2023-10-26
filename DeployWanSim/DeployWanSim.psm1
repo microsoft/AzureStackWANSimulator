@@ -303,7 +303,7 @@ function Remove-WanSimVM {
                 $currentVMs = Get-VM 
                 if ($vmName -in $currentVMs.Name) {
                     $vhdxPath = (Get-VM -VMName $vmName | Select-Object VMId | Get-VHD).Path
-                    Write-DeployWanSimLog -Message "vhdx path is '$vhdxPath'" @logParams
+                    $returnData.Logs.Add("vhdx path is '$vhdxPath'")
                     $returnData.Logs.Add("Stopping existing VM '$vmName'")
                     $null = Stop-VM -Name $vmName -Force
                     $returnData.Logs.Add("Removing existing VM '$vmName'")
