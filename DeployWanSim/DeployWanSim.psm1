@@ -77,12 +77,12 @@ function Invoke-WanSimDeployment {
     [CmdletBinding()]
     Param (
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [System.String]
         $WanSimName,
 
         # The HCI Cluster or Server to deploy against.
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [System.String]
         $DeploymentEndpoint,
 
@@ -108,19 +108,25 @@ function Invoke-WanSimDeployment {
         Write-DeployWanSimLog -Message "Creating pssession to '$DeploymentEndpoint'" @logParams
         $session = New-PSSession -ComputerName $DeploymentEndpoint
         Write-DeployWanSimLog -Message "pssession created to '$DeploymentEndpoint'" @logParams
+
+        # Scriptblock
         $scriptBlock = {
             try {
-                $returnData = @{ Logs = [System.Collections.ArrayList]@() ; Success = $false ; IpAddress = $null }
+                $returnData = @{ 
+                    Logs = [System.Collections.ArrayList]@() ; 
+                    Success = $false ; 
+                    IpAddress = $null 
+                }
                 $returnData.Logs.Add("Starting remoteley executed scritpblock.")
                 $vmName = $using:WanSimName
                 $imagePath = $using:BaseLineImagePath
                 $redeploy = $using:ForceRedeploy
-    
+        
                 $currentVMs = Get-VM 
                 if ($vmName -in $currentVMs.Name) {
                     if ($redeploy) {
                         $returnData.Logs.Add("ForceRedeploy is set to true. Removing existing VM '$vmName'")
-                        $vhdxPath = (Get-VM –VMName $vmName | Select-Object VMId | Get-VHD).Path
+                        $vhdxPath = (Get-VM -VMName $vmName | Select-Object VMId | Get-VHD).Path 
                         $returnData.Logs.Add("Stopping existing VM '$vmName'")
                         Stop-VM -Name $vmName -Force
                         $returnData.Logs.Add("Removing existing VM '$vmName'")
@@ -147,9 +153,9 @@ function Invoke-WanSimDeployment {
                 
                 # Calculate the volume number by taking the modulo (remainder) of the sum divided by 2 and adding 1. 
                 # This will give us a 1 or 2.
-                $volume = "Volume$($wanSimNameHashSum % 2) + 1)"
+                $volume = "Volume$($wanSimNameHashSum % 2 + 1)"
                 $returnData.Logs.Add("Calculated volume is: '$volume'")
-    
+        
                 if (Test-Path $imagePath) {
                     $returnData.Logs.Add("Baseline image found at '$imagePath'")
                 }
@@ -169,11 +175,11 @@ function Invoke-WanSimDeployment {
                 $returnData.Logs.Add("Creating a new differencing image '$diffFilePath'")
                 $null = New-VHD -Path $diffFilePath -ParentPath $imagePath -Differencing
                 $returnData.Logs.Add("New differencing image created at '$diffFilePath'")
-    
+        
                 $returnData.Logs.Add("Getting the management vSwitch")
                 $mgmtSwitchName = Get-VMSwitch -SwitchType External | Select-Object -First 1 -ExpandProperty Name 
                 $returnData.Logs.Add("Management vSwitch is '$mgmtSwitchName'")
-    
+        
                 $returnData.Logs.Add("Creating a new VM '$vmName'")
                 $null = New-VM -Name $vmName -MemoryStartupBytes 4GB -Generation 1 -VHDPath $diffFilePath -SwitchName $mgmtSwitchName -Path 'C:\ClusterStorage\Volume1\'
                 
@@ -199,7 +205,8 @@ function Invoke-WanSimDeployment {
                 throw $errorMessage
             }  
         }
-    
+
+
         $return = Invoke-Command -Session $session -ScriptBlock $scriptBlock
         Write-DeployWanSimLog -Message "Remote scriptblock completed." @logParams
         Write-DeployWanSimLog -Message "Success is '$($return.Success)'" @logParams
@@ -216,7 +223,7 @@ function Invoke-WanSimDeployment {
         $line = $_.InvocationInfo.ScriptLineNumber
         $exceptionMessage = $_.Exception.Message
         $errorMessage = "Failure during Invoke-WanSimDeployment. Error: $file : $line >> $exceptionMessage"
-        Write-DeployWanSimLog -Message $errorMessage @$logParams
+        Write-DeployWanSimLog -Message $errorMessage @logParams
         throw $errorMessage
     }  
 }
