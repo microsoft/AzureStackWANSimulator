@@ -121,8 +121,8 @@ function Invoke-WanSimDeployment {
         $scriptBlock = {
             try {
                 $returnData = @{ 
-                    Logs = [System.Collections.ArrayList]@() ; 
-                    Success = $false ; 
+                    Logs      = [System.Collections.ArrayList]@() ; 
+                    Success   = $false ; 
                     IpAddress = $null 
                 }
                 $returnData.Logs.Add("Starting remoteley executed scritpblock.")
@@ -136,11 +136,11 @@ function Invoke-WanSimDeployment {
                         $returnData.Logs.Add("ForceRedeploy is set to true. Removing existing VM '$vmName'")
                         $vhdxPath = (Get-VM -VMName $vmName | Select-Object VMId | Get-VHD).Path 
                         $returnData.Logs.Add("Stopping existing VM '$vmName'")
-                        Stop-VM -Name $vmName -Force
+                        $null = Stop-VM -Name $vmName -Force
                         $returnData.Logs.Add("Removing existing VM '$vmName'")
-                        Remove-VM -Name $vmName -Force
+                        $null = Remove-VM -Name $vmName -Force
                         $returnData.Logs.Add("Removing existing VHDX '$vhdxPath'")
-                        Remove-Item -Path $vhdxPath -Force
+                        $null = Remove-Item -Path $vhdxPath -Force
 
                     }
                     else {
@@ -193,13 +193,13 @@ function Invoke-WanSimDeployment {
                 $null = New-VM -Name $vmName -MemoryStartupBytes 4GB -Generation 1 -VHDPath $diffFilePath -SwitchName $mgmtSwitchName -Path 'C:\ClusterStorage\Volume1\'
                 
                 $returnData.Logs.Add("Setting VM Proccessor count to 1")
-                Set-VM -Name $vmName -ProcessorCount 1
+                $null = Set-VM -Name $vmName -ProcessorCount 1
                 
                 $returnData.Logs.Add("Setting VM Dynamic Memory to false")
-                Set-VMMemory -VMName $vmName -DynamicMemoryEnabled $false
+                $null = Set-VMMemory -VMName $vmName -DynamicMemoryEnabled $false
                 
                 $returnData.Logs.Add("Starting VM '$vmName'")
-                Start-VM -VMName $vmName
+                $null Start-VM -VMName $vmName
                 $returnData.Success = $true
                 return $returnData
             }
@@ -223,8 +223,16 @@ function Invoke-WanSimDeployment {
         foreach ($log in $return.Logs) {
             Write-DeployWanSimLog -Message $log @logParams
         }
-        Write-DeployWanSimLog -Message "Adding '$WanSimName' to '$DeploymentEndpoint' as a clustered VM" @logParams
-        $null = Add-ClusterVirtualMachineRole -VMName $WanSimName -Cluster $DeploymentEndpoint -Verbose
+        
+        
+        $clusterGroups = Get-ClusterGroup -Cluster $DeploymentEndpoint
+        if ($WanSimName -in $clusterGroups.Name) {
+            Write-DeployWanSimLog -Message "'$WanSimName' is already in the ClusterGroup" @logParams 
+        }
+        else {
+            Write-DeployWanSimLog -Message "Adding '$WanSimName' to '$DeploymentEndpoint' as a clustered VM" @logParams
+            $null = Add-ClusterVirtualMachineRole -VMName $WanSimName -Cluster $DeploymentEndpoint -Verbose
+        }
         return $true
     }
     catch {
