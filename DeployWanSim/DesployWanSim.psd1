@@ -1,16 +1,16 @@
 @{
 
     # Script module or binary module file associated with this manifest.
-    RootModule = 'AzSNetworkBootstrap.psm1'
+    RootModule = 'DeployWanSim.psm1'
     
     # Version number of this module.
-    ModuleVersion = '2.2.2209.1'
+    ModuleVersion = '1.1.1.1'
     
     # Supported PSEditions
     # CompatiblePSEditions = @()
     
     # ID used to uniquely identify this module
-    GUID = '72fa6f3b-ce95-4a7f-8d03-1b674638acd6'
+    GUID = '8f1619fa-23d3-424a-9ed9-e045ec8ab7ee'
     
     # Author of this module
     Author = 'Microsoft Corporation'
@@ -22,7 +22,7 @@
     Copyright = '(c) 2021 Microsoft Corporation. All rights reserved.'
     
     # Description of the functionality provided by this module
-    Description = 'Interfaces to support network boostrap in Azure Stack'
+    Description = 'Modules used to deploy a WANSIM on an HCI 22H2 Cluster'
     
     # Minimum version of the Windows PowerShell engine required by this module
     PowerShellVersion = '5.0'
