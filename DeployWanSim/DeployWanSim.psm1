@@ -110,8 +110,11 @@ function Invoke-WanSimDeployment {
         Write-DeployWanSimLog -Message "pssession created to '$DeploymentEndpoint'" @logParams
 
         if ($ForceRedeploy) {
-            Write-DeployWanSimLog -Message "ForceRedeploy is set to true. Removing existing VM '$WanSimName' from ClusterGroup" @logParams
-            Remove-ClusterGroup $WanSimName -Cluster $DeploymentEndpoint -Force -RemoveResources
+            $clusterGroups = Get-ClusterGroup -Cluster $DeploymentEndpoint
+            if ($WanSimName -in $clusterGroups.Name) {
+                Write-DeployWanSimLog -Message "ForceRedeploy is set to true. Removing existing VM '$WanSimName' from ClusterGroup" @logParams
+                $null = Remove-ClusterGroup $WanSimName -Cluster $DeploymentEndpoint -Force -RemoveResources -ErrorAction Stop
+            }
         }
 
         # Scriptblock
@@ -233,5 +236,11 @@ function Invoke-WanSimDeployment {
         $errorMessage = "Failure during Invoke-WanSimDeployment. Error: $file : $line >> $exceptionMessage"
         Write-DeployWanSimLog -Message $errorMessage @logParams
         throw $errorMessage
+    }
+    finally {
+        if ($session) {
+            Write-DeployWanSimLog -Message "Closing pssession to '$DeploymentEndpoint'" @logParams
+            Remove-PSSession -Session $session
+        }
     }  
 }
