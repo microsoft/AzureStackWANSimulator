@@ -214,6 +214,8 @@ function Invoke-WanSimDeployment {
         foreach ($log in $return.Logs) {
             Write-DeployWanSimLog -Message $log @logParams
         }
+        Write-DeployWanSimLog -Message "Adding '$WanSimName' to '$DeploymentEndpoint'" @logParams
+        Add-ClusterVirtualMachineRole -VMName $WanSimName -Cluster $DeploymentEndpoint -Verbose
         return $true
     }
     catch {
