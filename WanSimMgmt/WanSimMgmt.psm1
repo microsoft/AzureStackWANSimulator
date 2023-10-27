@@ -117,8 +117,13 @@ function Invoke-WanSimDeployment {
                             Write-Log -Message "VM '$WanSimName' already exists on '$DeploymentEndpoint'" @logParams
                             if ($vm.State -ne 'Online') {
                                 $ForceRedeploy = $true
+                                break
                             }
-                            break
+                            else {
+                                Write-Log -Message "VM '$WanSimName' is already running on '$DeploymentEndpoint'" @logParams
+                                return $true
+                            }
+                            
                         }                    
                     }
                 }
