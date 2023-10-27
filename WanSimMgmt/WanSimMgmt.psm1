@@ -318,7 +318,7 @@ function Remove-WanSimVM {
             }
 
         }
-        $vhdxPath = (Get-VM -VMName $WanSimName -ComputerName $ownerNode | Select-Object VMId | Get-VHD).Path
+        $vhdxPath = (Get-VM -VMName $WanSimName -ComputerName $ownerNode | Select-Object VMId | Get-VHD -ComputerName $ownerNode).Path
         Write-Log -Message "VHDX path is '$vhdxPath'" @logParams
             
         $scriptBlock = {
