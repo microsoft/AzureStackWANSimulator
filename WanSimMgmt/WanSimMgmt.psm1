@@ -90,7 +90,12 @@ function Invoke-WanSimDeployment {
 
         [Parameter(Mandatory = $false)]
         [Switch]
-        $ForceRedeploy 
+        $ForceRedeploy,
+        
+        # VLAN ID to use for the VM
+        [Parameter(Mandatory = $false)]
+        [int]
+        $VlanId = 2007
 
        
     )
@@ -168,6 +173,7 @@ function Invoke-WanSimDeployment {
                 $returnData.Logs.Add("Starting remoteley executed scritpblock.")
                 $vmName = $using:WanSimName
                 $imagePath = $using:BaseLineImagePath
+                $vlan = $using:VlanId
 
                 # Calculate the volume number based on the hash of the $WanSimName variable
                 # Convert the $WanSimName string to a byte array using UTF8 encoding
@@ -189,7 +195,7 @@ function Invoke-WanSimDeployment {
                 }
                 $imageFile = Get-Item -Path $imagePath
                 $diffFileName = $vmName + '.diff' + $imageFile.Extension
-                $diffFilePath = Join-Path -Path  "C:\ClusterStorage\$($volume)\VirtualMachines\" -ChildPath $diffFileName
+                $diffFilePath = Join-Path -Path  "C:\ClusterStorage\$($volume)\WanSimDiff\" -ChildPath $diffFileName
         
                 if (Test-Path -Path $diffFilePath) {
                     Write-Host "Removing the image file $diffFilePath"
@@ -205,7 +211,7 @@ function Invoke-WanSimDeployment {
                 $returnData.Logs.Add("Management vSwitch is '$mgmtSwitchName'")
         
                 $returnData.Logs.Add("Creating a new VM '$vmName'")
-                $null = New-VM -Name $vmName -MemoryStartupBytes 4GB -Generation 1 -VHDPath $diffFilePath -SwitchName $mgmtSwitchName -Path 'C:\ClusterStorage\Volume1\'
+                $null = New-VM -Name $vmName -MemoryStartupBytes 4GB -Generation 1 -VHDPath $diffFilePath -SwitchName $mgmtSwitchName -Path "C:\ClusterStorage\$($volume)\$($vmName)\"
                 
                 $returnData.Logs.Add("Setting VM Proccessor count to 1 and disabling checkpoints")
                 $null = Set-VM -Name $vmName -ProcessorCount 1 -CheckpointType Disabled
@@ -213,7 +219,8 @@ function Invoke-WanSimDeployment {
                 $returnData.Logs.Add("Setting VM Dynamic Memory to false")
                 $null = Set-VMMemory -VMName $vmName -DynamicMemoryEnabled $false
 
-                $null = Set-VMNetworkAdapterVlan -VMName $vmName -VlanId 2007 -Access
+                $returnData.Logs.Add("Setting VM VLAN to 2007")
+                $null = Set-VMNetworkAdapterVlan -VMName $vmName -VlanId $vlan -Access
                 
                 $returnData.Logs.Add("Starting VM '$vmName'")
                 $null = Start-VM -VMName $vmName
