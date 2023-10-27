@@ -195,7 +195,7 @@ function Invoke-WanSimDeployment {
                 }
                 $imageFile = Get-Item -Path $imagePath
                 $diffFileName = $vmName + '.diff' + $imageFile.Extension
-                $diffFilePath = Join-Path -Path  "C:\ClusterStorage\$($volume)\WanSimDiff\" -ChildPath $diffFileName
+                $diffFilePath = Join-Path -Path  "C:\ClusterStorage\$($volume)\$($vmName)\" -ChildPath $diffFileName
         
                 if (Test-Path -Path $diffFilePath) {
                     Write-Host "Removing the image file $diffFilePath"
