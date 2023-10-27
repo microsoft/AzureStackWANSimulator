@@ -190,19 +190,12 @@ function Invoke-WanSimDeployment {
                 $returnData.Logs.Add("Creating a new VM '$vmName'")
                 $null = New-VM -Name $vmName -MemoryStartupBytes 4GB -Generation 1 -VHDPath $diffFilePath -SwitchName $mgmtSwitchName -Path 'C:\ClusterStorage\Volume1\'
                 
+                $returnData.Logs.Add("Setting VM Proccessor count to 1 and disabling checkpoints")
+                $null = Set-VM -Name $vmName -ProcessorCount 1 -AutomaticCheckpointsEnabled $false
 
-                $setVMparams = @{
-                    VMName = $vmName
-                    AutomaticCheckpointsEnabled = $false
-                    DynamicMemoryEnabled = $false
-                    ProcessorCount = 1
-                }
-                $returnData.Logs.Add("Setting VM parameters")
-                foreach ($key in $setVMparams.Keys) {
-                    $value = $setVMparams[$key]
-                    $returnData.Logs.Add("'$key' = '$value'")
-                }
-                $null = Set-VM @setVMparams
+                $returnData.Logs.Add("Setting VM Dynamic Memory to false")
+                $null = Set-VMMemory -VMName $vmName -DynamicMemoryEnabled $false
+                
                 $returnData.Logs.Add("Starting VM '$vmName'")
                 $null = Start-VM -VMName $vmName
                 $returnData.Success = $true
