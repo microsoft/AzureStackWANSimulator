@@ -196,7 +196,7 @@ function Invoke-WanSimDeployment {
                 $null = New-VM -Name $vmName -MemoryStartupBytes 4GB -Generation 1 -VHDPath $diffFilePath -SwitchName $mgmtSwitchName -Path 'C:\ClusterStorage\Volume1\'
                 
                 $returnData.Logs.Add("Setting VM Proccessor count to 1 and disabling checkpoints")
-                $null = Set-VM -Name $vmName -ProcessorCount 1 -AutomaticCheckpointsEnabled $false
+                $null = Set-VM -Name $vmName -ProcessorCount 1 -CheckpointType Disabled
 
                 $returnData.Logs.Add("Setting VM Dynamic Memory to false")
                 $null = Set-VMMemory -VMName $vmName -DynamicMemoryEnabled $false
