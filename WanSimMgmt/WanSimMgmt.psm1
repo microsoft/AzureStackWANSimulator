@@ -195,8 +195,8 @@ function Invoke-WanSimDeployment {
                 }
                 $imageFile = Get-Item -Path $imagePath
                 $diffFileName = $vmName + '.diff' + $imageFile.Extension
-                $diffFilePath = Join-Path -Path  "C:\ClusterStorage\$($volume)\$($vmName)\" -ChildPath $diffFileName
-        
+                $rootVmFilePath =  "C:\ClusterStorage\$($volume)\WANSIM_VMs\$($vmName)\"
+                $diffFilePath = Join-Path -Path $rootVmFilePath -ChildPath $diffFileName
                 if (Test-Path -Path $diffFilePath) {
                     Write-Host "Removing the image file $diffFilePath"
                     Remove-Item -Path $diffFilePath -Force
@@ -211,7 +211,7 @@ function Invoke-WanSimDeployment {
                 $returnData.Logs.Add("Management vSwitch is '$mgmtSwitchName'")
         
                 $returnData.Logs.Add("Creating a new VM '$vmName'")
-                $null = New-VM -Name $vmName -MemoryStartupBytes 4GB -Generation 1 -VHDPath $diffFilePath -SwitchName $mgmtSwitchName -Path "C:\ClusterStorage\$($volume)\$($vmName)\"
+                $null = New-VM -Name $vmName -MemoryStartupBytes 4GB -Generation 1 -VHDPath $diffFilePath -SwitchName $mgmtSwitchName -Path $rootVmFilePath
                 
                 $returnData.Logs.Add("Setting VM Proccessor count to 1 and disabling checkpoints")
                 $null = Set-VM -Name $vmName -ProcessorCount 1 -CheckpointType Disabled
