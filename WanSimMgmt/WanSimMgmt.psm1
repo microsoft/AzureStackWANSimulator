@@ -195,7 +195,7 @@ function Invoke-WanSimDeployment {
                 }
                 $imageFile = Get-Item -Path $imagePath
                 $diffFileName = $vmName + '.diff' + $imageFile.Extension
-                $rootVmFilePath =  "C:\ClusterStorage\$($volume)\WANSIM_VMs\$($vmName)\"
+                $rootVmFilePath =  "C:\ClusterStorage\$($volume)\WANSIM_VMs\"
                 $diffFilePath = Join-Path -Path $rootVmFilePath -ChildPath $diffFileName
                 if (Test-Path -Path $diffFilePath) {
                     Write-Host "Removing the image file $diffFilePath"
@@ -386,6 +386,8 @@ function Remove-WanSimVM {
         foreach ($log in $return.Logs) {
             Write-Log -Message $log @logParams
         }
+
+
         if (!$return.Success) {
             throw "Excpetion caught in script block for Remove-WanSimVM. See logs for more details."
         }
