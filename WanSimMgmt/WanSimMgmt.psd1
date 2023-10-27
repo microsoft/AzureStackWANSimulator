@@ -1,10 +1,10 @@
 @{
 
     # Script module or binary module file associated with this manifest.
-    RootModule = 'DeployWanSim.psm1'
+    RootModule = 'WanSimMgmt.psm1'
     
     # Version number of this module.
-    ModuleVersion = '1.1.1.1'
+    ModuleVersion = '1.1.1.0'
     
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -22,7 +22,7 @@
     Copyright = '(c) 2023 Microsoft Corporation. All rights reserved.'
     
     # Description of the functionality provided by this module
-    Description = 'Modules used to deploy a WANSIM on an HCI 22H2 Cluster'
+    Description = 'Modules used to manage a WANSIM on an HCI 22H2 Cluster'
     
     # Minimum version of the Windows PowerShell engine required by this module
     PowerShellVersion = '5.0'
@@ -64,7 +64,8 @@
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
     # NOTE: Some functions are exported temporarily until all devices are brought into bootstrap.
     FunctionsToExport = @(
-        Invoke-WanSimDeployment
+        'Invoke-WanSimDeployment'
+        'Remove-WanSimVM'
     )
     
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.

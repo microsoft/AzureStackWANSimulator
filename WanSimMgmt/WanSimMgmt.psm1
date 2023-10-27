@@ -278,7 +278,6 @@ function Invoke-WanSimDeployment {
 }
 
 
-
 function Remove-WanSimVM {
     [CmdletBinding()]
     Param (
@@ -319,9 +318,6 @@ function Remove-WanSimVM {
             Write-Log -Message "Pssession created to '$DeploymentEndpoint'" @logParams
         }
 
-        # Get-ClusterGrops servers two purposes here.
-        # 1- a signal if the VM is a clustered VM
-        # 2- gets information about where the VM is running on the cluster
         Write-Log -Message "Checking if '$WanSimName' is in the ClusterGroup" @logParams
         $clusteredVM = Get-ClusterGroup -Name $WanSimName -Cluster $DeploymentEndpoint -ErrorAction SilentlyContinue
         if ([bool]$clusteredVM -eq $true) {
@@ -345,8 +341,7 @@ function Remove-WanSimVM {
 
         }
         $vmPath = (Get-VM -VMName $WanSimName -ComputerName $ownerNode).Path
-        $vhdxPath = (Get-VM -VMName $WanSimName -ComputerName $ownerNode | Select-Object VMId | Get-VHD -ComputerName $ownerNode).Path
-        Write-Log -Message "VHDX path is '$vhdxPath'" @logParams
+        Write-Log -Message "vmPath path is '$vmPath'" @logParams
             
         $scriptBlock = {
             try {
@@ -363,7 +358,7 @@ function Remove-WanSimVM {
                 $null = Stop-VM -Name $vmName -Force
                 $returnData.Logs.Add("Removing existing VM '$vmName'")
                 $null = Remove-VM -Name $vmName -Force
-                $returnData.Logs.Add("Removing existing VHDX '$vmPath'")
+                $returnData.Logs.Add("Removing existing all files in path '$vmPath'")
                 $null = Remove-Item -Path $vmPath -Recurse -Force
                 $returnData.Success = $true
                 return $returnData
@@ -389,8 +384,6 @@ function Remove-WanSimVM {
         foreach ($log in $return.Logs) {
             Write-Log -Message $log @logParams
         }
-
-
         if (!$return.Success) {
             throw "Excpetion caught in script block for Remove-WanSimVM. See logs for more details."
         }
@@ -414,8 +407,3 @@ function Remove-WanSimVM {
         }
     }  
 }
-
-
-#############################
-# Region Internal functions #
-#############################
