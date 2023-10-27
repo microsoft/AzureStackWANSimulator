@@ -356,6 +356,7 @@ function Remove-WanSimVM {
                     Success = $false ; 
                 }
                 $diskPath = $using:vhdxPath
+                $vmPath = $using:vmPath
                 $returnData.Logs.Add("Starting remoteley executed scritpblock.")
                 $vmName = $using:WanSimName
                 $returnData.Logs.Add("Stopping existing VM '$vmName'")
