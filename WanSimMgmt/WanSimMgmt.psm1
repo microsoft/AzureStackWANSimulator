@@ -83,11 +83,6 @@ function Invoke-WanSimDeployment {
         [System.String]
         $BaseLineImagePath = 'C:\ClusterStorage\Volume1\Baseline\WANSIM-Baseline.vhdx',
 
-        # 
-        [Parameter(Mandatory = $false)]
-        [System.Management.Automation.PSCredential]
-        $DeploymentEndpointCredential,
-
         [Parameter(Mandatory = $false)]
         [Switch]
         $ForceRedeploy,
@@ -289,13 +284,8 @@ function Remove-WanSimVM {
         # The HCI Cluster or Server to delete a WANSIM from
         [Parameter(Mandatory = $true)]
         [System.String]
-        $DeploymentEndpoint,
+        $DeploymentEndpoint
 
-        # Credentials to use when connecting to the HCI Cluster or Server.
-        [Parameter(Mandatory = $false)]
-        [System.Management.Automation.PSCredential]
-        $DeploymentEndpointCredential
-       
     )
 
     try {
