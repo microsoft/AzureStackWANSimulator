@@ -196,7 +196,8 @@ function Invoke-WanSimDeployment {
                 $imageFile = Get-Item -Path $imagePath
                 $diffFileName = $vmName + '.diff' + $imageFile.Extension
                 $rootVmFilePath =  "C:\ClusterStorage\$($volume)\WANSIM_VMs\"
-                $diffFilePath = Join-Path -Path $rootVmFilePath -ChildPath $diffFileName
+                $vhdxRootPath = Join-Path -Path $rootVmFilePath -ChildPath $vmName
+                $diffFilePath = Join-Path -Path $vhdxRootPath -ChildPath $diffFileName
                 if (Test-Path -Path $diffFilePath) {
                     Write-Host "Removing the image file $diffFilePath"
                     Remove-Item -Path $diffFilePath -Force
@@ -343,6 +344,7 @@ function Remove-WanSimVM {
             }
 
         }
+        $vmPath = (Get-VM -VMName $WanSimName -ComputerName $ownerNode).Path
         $vhdxPath = (Get-VM -VMName $WanSimName -ComputerName $ownerNode | Select-Object VMId | Get-VHD -ComputerName $ownerNode).Path
         Write-Log -Message "VHDX path is '$vhdxPath'" @logParams
             
@@ -360,8 +362,8 @@ function Remove-WanSimVM {
                 $null = Stop-VM -Name $vmName -Force
                 $returnData.Logs.Add("Removing existing VM '$vmName'")
                 $null = Remove-VM -Name $vmName -Force
-                $returnData.Logs.Add("Removing existing VHDX '$diskPath'")
-                $null = Remove-Item -Path $diskPath -Force
+                $returnData.Logs.Add("Removing existing VHDX '$vmPath'")
+                $null = Remove-Item -Path $vmPath -Recurse -Force
                 $returnData.Success = $true
                 return $returnData
             }
