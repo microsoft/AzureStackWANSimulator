@@ -101,21 +101,27 @@ function Invoke-WanSimDeployment {
         $session = New-PSSession -ComputerName $DeploymentEndpoint
         Write-Log -Message "Pssession created to '$DeploymentEndpoint'" @logParams
 
+        Write-Log -Message "ForceRedeploy is set to '$ForceRedeploy'" @logParams
         if (!$ForceRedeploy){
             try {
+                Write-Log -Message "Checking if this is a cluster or single server for '$DeploymentEndpoint'" @logParams
                 $currentVMs = Get-ClusterGroup -Cluster $DeploymentEndpoint | Get-ClusterResource | Where-Object { $_.ResourceType -eq "Virtual Machine" }
                 $clustered = $true 
+                Write-Log -Message "This is a cluster" @logParams
             }
             catch {
                 $currentVMs = Get-VM -ComputerName $DeploymentEndpoint -ErrorAction SilentlyContinue
+                Write-Log -Message "This is a single server" @logParams
             }
             # Check for current VM's
             if ([bool]$currentVMs) {
                 if ($clustered) {
+                    Write-Log -Message "Checking if '$WanSimName' already exists on '$DeploymentEndpoint' as a clustered VM" @logParams
                     foreach ($vm in $currentVMs) {
                         if ($vm.OwnerGroup.name -eq $WanSimName) {
                             Write-Log -Message "VM '$WanSimName' already exists on '$DeploymentEndpoint'" @logParams
                             if ($vm.State -ne 'Online') {
+                                Write-Log -Message "VM '$WanSimName' is not running on '$DeploymentEndpoint' setting ForceRedploy" @logParams
                                 $ForceRedeploy = $true
                                 break
                             }
@@ -128,13 +134,19 @@ function Invoke-WanSimDeployment {
                     }
                 }
                 else {
+                    Write-Log -Message "Checking if '$WanSimName' already exists on '$DeploymentEndpoint' as a non-clustered VM" @logParams
                     foreach ($vm in $currentVMs) {
                         if ($vm.Name -eq $WanSimName) {
                             Write-Log -Message "VM '$WanSimName' already exists on '$DeploymentEndpoint'" @logParams
                             if ($vm.State -ne 'Running') {
+                                Write-Log -Message "VM '$WanSimName' is not running on '$DeploymentEndpoint' setting ForceRedploy" @logParams
                                 $ForceRedeploy = $true
+                                break
                             }
-                            break
+                            else {
+                                Write-Log -Message "VM '$WanSimName' is already running on '$DeploymentEndpoint'" @logParams
+                                return $true
+                            }
                         }                    
                     }
                 }
@@ -143,7 +155,7 @@ function Invoke-WanSimDeployment {
 
         if ($ForceRedeploy) {
             Write-Log -Message "ForceRedeploy is set to true, running 'Remove-WanSimVM'." @logParams
-            Remove-WanSimVM -WanSimName $WanSimName -DeploymentEndpoint $DeploymentEndpoint
+            $null = Remove-WanSimVM -WanSimName $WanSimName -DeploymentEndpoint $DeploymentEndpoint
         }
        
         # Scriptblock
@@ -200,6 +212,8 @@ function Invoke-WanSimDeployment {
 
                 $returnData.Logs.Add("Setting VM Dynamic Memory to false")
                 $null = Set-VMMemory -VMName $vmName -DynamicMemoryEnabled $false
+
+                $null = Set-VMNetworkAdapterVlan -VMName $vmName -VlanId 2007 -Access
                 
                 $returnData.Logs.Add("Starting VM '$vmName'")
                 $null = Start-VM -VMName $vmName
@@ -297,18 +311,17 @@ function Remove-WanSimVM {
             Write-Log -Message "Pssession created to '$DeploymentEndpoint'" @logParams
         }
 
-
-
         # Get-ClusterGrops servers two purposes here.
         # 1- a signal if the VM is a clustered VM
         # 2- gets information about where the VM is running on the cluster
         Write-Log -Message "Checking if '$WanSimName' is in the ClusterGroup" @logParams
         $clusteredVM = Get-ClusterGroup -Name $WanSimName -Cluster $DeploymentEndpoint -ErrorAction SilentlyContinue
-        if ([bool]$clusteredVM) {
-            Write-Log -Message "Removing existing VM '$WanSimName' from ClusterGroup" @logParams
-            $null = Remove-ClusterGroup $WanSimName -Cluster $DeploymentEndpoint -Force -RemoveResources
+        if ([bool]$clusteredVM -eq $true) {
             $ownerNode = $clusteredVM.OwnerNode.Name
             Write-Log -Message "The owner nodes is '$ownerNode'" @logParams
+            Write-Log -Message "Removing existing VM '$WanSimName' from ClusterGroup" @logParams
+            $null = Remove-ClusterGroup $WanSimName -Cluster $DeploymentEndpoint -Force -RemoveResources
+
         }
         else {
             Write-Log -Message "VM '$WanSimName' is not a Clustered VM. Checking if its a non-clustered VM" @logParams
