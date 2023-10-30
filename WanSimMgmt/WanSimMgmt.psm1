@@ -239,6 +239,7 @@ function Invoke-WanSimDeployment {
         }
 
         # Execute the scriptblock
+        Write-Log -Message "Executing remote scriptblock to create the WAN SIM VM" @logParams
         $return = Invoke-Command -Session $session -ScriptBlock $scriptBlock
         Write-Log -Message "Remote scriptblock completed." @logParams
         Write-Log -Message "Success is '$($return.Success)'" @logParams
