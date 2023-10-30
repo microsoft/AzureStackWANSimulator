@@ -373,6 +373,7 @@ function Remove-WanSimVM {
         }
 
         # Execute the scriptblock
+        Write-Log -Message "Creating a Pssession to the ownerNode '$ownerNode'" @logParams
         $ownerNodeSession = New-PSSession -ComputerName $ownerNode
         $return = Invoke-Command -Session $ownerNodeSession -ScriptBlock $scriptBlock
         Write-Log -Message "Remote scriptblock completed." @logParams
