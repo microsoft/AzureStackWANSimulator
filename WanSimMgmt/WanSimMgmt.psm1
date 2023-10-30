@@ -101,18 +101,21 @@ function Invoke-WanSimDeployment {
         $session = New-PSSession -ComputerName $DeploymentEndpoint
         Write-Log -Message "Pssession created to '$DeploymentEndpoint'" @logParams
 
+        try {
+            Write-Log -Message "Checking if this is a cluster or single server for '$DeploymentEndpoint'" @logParams
+            $currentVMs = Get-ClusterGroup -Cluster $DeploymentEndpoint | Get-ClusterResource | Where-Object { $_.ResourceType -eq "Virtual Machine" }
+            $clustered = $true 
+            Write-Log -Message "This is a cluster" @logParams
+        }
+        catch {
+            $currentVMs = Get-VM -ComputerName $DeploymentEndpoint -ErrorAction SilentlyContinue
+            $clustered = $false
+            Write-Log -Message "This is a single server" @logParams
+        }
+
         Write-Log -Message "ForceRedeploy is set to '$ForceRedeploy'" @logParams
         if (!$ForceRedeploy){
-            try {
-                Write-Log -Message "Checking if this is a cluster or single server for '$DeploymentEndpoint'" @logParams
-                $currentVMs = Get-ClusterGroup -Cluster $DeploymentEndpoint | Get-ClusterResource | Where-Object { $_.ResourceType -eq "Virtual Machine" }
-                $clustered = $true 
-                Write-Log -Message "This is a cluster" @logParams
-            }
-            catch {
-                $currentVMs = Get-VM -ComputerName $DeploymentEndpoint -ErrorAction SilentlyContinue
-                Write-Log -Message "This is a single server" @logParams
-            }
+            
             # Check for current VM's
             if ([bool]$currentVMs) {
                 if ($clustered) {
@@ -244,13 +247,16 @@ function Invoke-WanSimDeployment {
             Write-Log -Message $log @logParams
         }
         
-        $clusterGroups = Get-ClusterGroup -Cluster $DeploymentEndpoint
-        if ($WanSimName -in $clusterGroups.Name) {
-            Write-Log -Message "'$WanSimName' is already in the ClusterGroup" @logParams 
-        }
-        else {
-            Write-Log -Message "Adding '$WanSimName' to '$DeploymentEndpoint' as a clustered VM" @logParams
-            $null = Add-ClusterVirtualMachineRole -VMName $WanSimName -Cluster $DeploymentEndpoint -Verbose
+        if ($clustered) {
+            Write-Log -Message "Checking if '$WanSimName' is in the ClusterGroup" @logParams
+            $clusterGroups = Get-ClusterGroup -Cluster $DeploymentEndpoint
+            if ($WanSimName -in $clusterGroups.Name) {
+                Write-Log -Message "'$WanSimName' is already in the ClusterGroup" @logParams 
+            }
+            else {
+                Write-Log -Message "Adding '$WanSimName' to '$DeploymentEndpoint' as a clustered VM" @logParams
+                $null = Add-ClusterVirtualMachineRole -VMName $WanSimName -Cluster $DeploymentEndpoint -Verbose
+            }
         }
         return $true
     }
