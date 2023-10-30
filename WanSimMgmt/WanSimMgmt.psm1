@@ -198,7 +198,7 @@ function Invoke-WanSimDeployment {
                 $diffFilePath = Join-Path -Path $vhdxRootPath -ChildPath $diffFileName
                 if (Test-Path -Path $diffFilePath) {
                     Write-Host "Removing the image file $diffFilePath"
-                    Remove-Item -Path $diffFilePath -Force
+                    $null = Remove-Item -Path $diffFilePath -Force
                 }
         
                 $returnData.Logs.Add("Creating a new differencing image '$diffFilePath'")
@@ -373,7 +373,8 @@ function Remove-WanSimVM {
         }
 
         # Execute the scriptblock
-        $return = Invoke-Command -Session $session -ScriptBlock $scriptBlock
+        $ownerNodeSession = New-PSSession -ComputerName $ownerNode
+        $return = Invoke-Command -Session $ownerNodeSession -ScriptBlock $scriptBlock
         Write-Log -Message "Remote scriptblock completed." @logParams
         Write-Log -Message "Success is '$($return.Success)'" @logParams
         Write-Log -Message "Logs from pssession are:" @logParams
@@ -400,6 +401,10 @@ function Remove-WanSimVM {
         if ($session -and $keepSession -eq $false) {
             Write-Log -Message "Closing pssession to '$DeploymentEndpoint'" @logParams
             $null = Remove-PSSession -Session $session
+        }
+        if ($ownerNodeSession){
+            Write-Log -Message "Closing pssession to '$ownerNode'" @logParams
+            $null = Remove-PSSession -Session $ownerNodeSession
         }
     }  
 }
