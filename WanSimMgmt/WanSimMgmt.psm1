@@ -346,16 +346,15 @@ function Remove-WanSimVM {
                     Logs    = [System.Collections.ArrayList]@() ; 
                     Success = $false ; 
                 }
-                $diskPath = $using:vhdxPath
-                $vmPath = $using:vmPath
+                $vmFilepath = $using:vmPath
                 $returnData.Logs.Add("Starting remoteley executed scritpblock.")
                 $vmName = $using:WanSimName
                 $returnData.Logs.Add("Stopping existing VM '$vmName'")
                 $null = Stop-VM -Name $vmName -Force
                 $returnData.Logs.Add("Removing existing VM '$vmName'")
                 $null = Remove-VM -Name $vmName -Force
-                $returnData.Logs.Add("Removing existing all files in path '$vmPath'")
-                $null = Remove-Item -Path $vmPath -Recurse -Force
+                $returnData.Logs.Add("Removing existing all files in path '$vmFilepath'")
+                $null = Remove-Item -Path $vmFilepath -Recurse -Force
                 $returnData.Success = $true
                 return $returnData
             }
