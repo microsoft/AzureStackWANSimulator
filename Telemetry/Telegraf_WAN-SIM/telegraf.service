@@ -3,7 +3,6 @@ Description=Telegraf Service
 
 [Service]
 Type=simple
-User=telegraf
 ExecStart=/usr/bin/telegraf
 Environment="INFLUX_TOKEN=api_key"
 
