@@ -505,8 +505,9 @@ function Get-WanSimIpAddresses {
             }
         }
         Write-Log -Message "Getting the VMNetworkAdapterInfo for '$WanSimName' on '$ownerNode'" @logParams
+        $ips = [System.Collections.ArrayList]@()
         $vmNetworkAdapterInfo = (Get-VMNetworkAdapter -VMName $WanSimName -ComputerName $ownerNode)
-        [System.Collections.ArrayList]$ips = @($vmNetworkAdapterInfo.IPAddresses | Where-Object { $_ -notmatch '^fe80:' })
+        $ips += @($vmNetworkAdapterInfo.IPAddresses | Where-Object { $_ -notmatch '^fe80:' })
         $ips | Where-Object { Write-Log -Message "IP Address is $_" @logParams }
         
         return $ips
