@@ -488,6 +488,7 @@ function Get-WanSimIpAddresses {
         Write-Log -Message "Checking if '$WanSimName' is in the ClusterGroup" @logParams
         $clusteredVM = Get-ClusterGroup -Name $WanSimName -Cluster $DeploymentEndpoint -ErrorAction SilentlyContinue
         if ([bool]$clusteredVM -eq $true) {
+            rite-Log -Message "'$WanSimName' is in a ClusterGroup." @logParams
             $ownerNode = $clusteredVM.OwnerNode.Name
             Write-Log -Message "The owner nodes is '$ownerNode'" @logParams
         }
