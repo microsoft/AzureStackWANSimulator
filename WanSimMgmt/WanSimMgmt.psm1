@@ -91,8 +91,7 @@ function Invoke-WanSimDeployment {
         [Parameter(Mandatory = $false)]
         [int]
         $VlanId = 2007
-
-       
+ 
     )
     
     try { 
@@ -408,4 +407,61 @@ function Remove-WanSimVM {
             $null = Remove-PSSession -Session $ownerNodeSession
         }
     }  
+}
+
+function Get-WanSimIpAddresses {
+    [CmdletBinding()]
+    Param (
+
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $WanSimName,
+
+        # The HCI Cluster or Server to deploy against.
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $DeploymentEndpoint
+ 
+    )
+
+    try {
+        $logParams = @{ Function = $MyInvocation.MyCommand.Name; Verbose = $true }
+        Write-Log -Message "Starting Get-WanSimIPaddresses for WanSim '$WanSimName' on DeploymentEndpoint '$DeploymentEndpoint'" @logParams
+
+        Write-Log -Message "Checking if '$WanSimName' is in the ClusterGroup" @logParams
+        $clusteredVM = Get-ClusterGroup -Name $WanSimName -Cluster $DeploymentEndpoint -ErrorAction SilentlyContinue
+        if ([bool]$clusteredVM -eq $true) {
+            $ownerNode = $clusteredVM.OwnerNode.Name
+            Write-Log -Message "The owner nodes is '$ownerNode'" @logParams
+        }
+        else {
+            Write-Log -Message "VM '$WanSimName' is not a Clustered VM. Checking if its a non-clustered VM" @logParams
+            try {
+                $null = Get-VM -Name $WanSimName -ComputerName $DeploymentEndpoint
+                $ownerNode = $DeploymentEndpoint 
+            }
+            catch {
+                Write-Log -Message "VM '$WanSimName' is not a non-clustered VM" @logParams
+                Write-Log -Message "VM '$WanSimName' does not exist. Exiting now." @logParams
+                Throw "VM '$WanSimName' does not exist on on DeploymentEndpoint '$DeploymentEndpoint'. Exiting now."
+            }
+        }
+        Write-Log -Message "Getting the VMNetworkAdapterInfo for '$WanSimName' on '$ownerNode'" @logParams
+        $vmNetworkAdapterInfo = (Get-VMNetworkAdapter -VMName $WanSimName -ComputerName $ownerNode)
+        $ips = $vmNetworkAdapterInfo.IPAddresses | Where-Object { $_ -notmatch '^fe80:' }
+        $ips | Where-Object { Write-Log -Message "IP Address is $_" @logParams }
+        
+        return $ips
+    }
+    catch {
+
+        # More detailed failure information
+        $file = $_.InvocationInfo.ScriptName
+        $line = $_.InvocationInfo.ScriptLineNumber
+        $exceptionMessage = $_.Exception.Message
+        $errorMessage = "Failure during Get-WanSimIPaddresses. Error: $file : $line >> $exceptionMessage"
+        Write-Log -Message $errorMessage @logParams
+        throw $errorMessage
+    }
+
 }
