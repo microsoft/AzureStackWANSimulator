@@ -65,6 +65,24 @@ function Write-Log {
 # Region Exported functions #
 #############################
 
+<#
+.SYNOPSIS
+   Deploys a specified WanSim.
+
+.DESCRIPTION
+   The Invoke-WanSimDeployment function deploys a specified WanSim to a specified deployment endpoint.
+
+.PARAMETER WanSimName
+   The name of the WanSim to deploy.
+
+.PARAMETER DeploymentEndpoint
+   The HCI Cluster or Server to deploy against.
+
+.EXAMPLE
+   Invoke-WanSimDeployment -WanSimName "WanSim1" -DeploymentEndpoint "Endpoint1"
+
+   Deploys the WanSim named "WanSim1" to the deployment endpoint "Endpoint1".
+#>
 function Invoke-WanSimDeployment {
     [CmdletBinding()]
     Param (
@@ -113,7 +131,7 @@ function Invoke-WanSimDeployment {
         }
 
         Write-Log -Message "ForceRedeploy is set to '$ForceRedeploy'" @logParams
-        if (!$ForceRedeploy){
+        if (!$ForceRedeploy) {
             
             # Check for current VM's
             if ([bool]$currentVMs) {
@@ -192,7 +210,7 @@ function Invoke-WanSimDeployment {
                 }
                 $imageFile = Get-Item -Path $imagePath
                 $diffFileName = $vmName + '.diff' + $imageFile.Extension
-                $rootVmFilePath =  "C:\ClusterStorage\$($volume)\WANSIM_VMs\"
+                $rootVmFilePath = "C:\ClusterStorage\$($volume)\WANSIM_VMs\"
                 $vhdxRootPath = Join-Path -Path $rootVmFilePath -ChildPath $vmName
                 $diffFilePath = Join-Path -Path $vhdxRootPath -ChildPath $diffFileName
                 if (Test-Path -Path $diffFilePath) {
@@ -279,6 +297,24 @@ function Invoke-WanSimDeployment {
 }
 
 
+<#
+.SYNOPSIS
+   Removes a specified WanSim.
+
+.DESCRIPTION
+   The Remove-WanSim function removes a specified WanSim from a specified deployment endpoint.
+
+.PARAMETER WanSimName
+   The name of the WanSim to remove.
+
+.PARAMETER DeploymentEndpoint
+   The HCI Cluster or Server to remove from.
+
+.EXAMPLE
+   Remove-WanSim -WanSimName "WanSim1" -DeploymentEndpoint "Endpoint1"
+
+   Removes the WanSim named "WanSim1" from the deployment endpoint "Endpoint1".
+#>
 function Remove-WanSimVM {
     [CmdletBinding()]
     Param (
@@ -402,13 +438,33 @@ function Remove-WanSimVM {
             Write-Log -Message "Closing pssession to '$DeploymentEndpoint'" @logParams
             $null = Remove-PSSession -Session $session
         }
-        if ($ownerNodeSession){
+        if ($ownerNodeSession) {
             Write-Log -Message "Closing pssession to '$ownerNode'" @logParams
             $null = Remove-PSSession -Session $ownerNodeSession
         }
     }  
 }
 
+
+<#
+.SYNOPSIS
+   Retrieves the IP addresses of a specified WanSim.
+
+.DESCRIPTION
+   The Get-WanSimIpAddresses function retrieves the IP addresses of a specified WanSim. 
+   It checks if the WanSim is in the ClusterGroup and retrieves the IP addresses accordingly.
+
+.PARAMETER WanSimName
+   The name of the WanSim for which to retrieve the IP addresses.
+
+.PARAMETER DeploymentEndpoint
+   The HCI Cluster or Server to deploy against.
+
+.EXAMPLE
+   Get-WanSimIpAddresses -WanSimName "WanSim1" -DeploymentEndpoint "Endpoint1"
+
+   Retrieves the IP addresses of the WanSim named "WanSim1" on the deployment endpoint "Endpoint1".
+#>
 function Get-WanSimIpAddresses {
     [CmdletBinding()]
     Param (
