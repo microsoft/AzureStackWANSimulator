@@ -353,6 +353,7 @@ function Remove-WanSimVM {
         Write-Log -Message "Checking if '$WanSimName' is in the ClusterGroup" @logParams
         $clusteredVM = Get-ClusterGroup -Name $WanSimName -Cluster $DeploymentEndpoint -ErrorAction SilentlyContinue
         if ([bool]$clusteredVM -eq $true) {
+            Write-Log -Message "VM '$WanSimName' is a clustered VM." @logParams
             $ownerNode = $clusteredVM.OwnerNode.Name
             Write-Log -Message "The owner nodes is '$ownerNode'" @logParams
             Write-Log -Message "Removing existing VM '$WanSimName' from ClusterGroup" @logParams
@@ -504,7 +505,7 @@ function Get-WanSimIpAddresses {
         }
         Write-Log -Message "Getting the VMNetworkAdapterInfo for '$WanSimName' on '$ownerNode'" @logParams
         $vmNetworkAdapterInfo = (Get-VMNetworkAdapter -VMName $WanSimName -ComputerName $ownerNode)
-        $ips = $vmNetworkAdapterInfo.IPAddresses | Where-Object { $_ -notmatch '^fe80:' }
+        $ips = @($vmNetworkAdapterInfo.IPAddresses | Where-Object { $_ -notmatch '^fe80:' })
         $ips | Where-Object { Write-Log -Message "IP Address is $_" @logParams }
         
         return $ips
