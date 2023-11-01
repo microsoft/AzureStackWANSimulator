@@ -505,16 +505,9 @@ function Get-WanSimIpAddresses {
             }
         }
         Write-Log -Message "Getting the VMNetworkAdapterInfo for '$WanSimName' on '$ownerNode'" @logParams
-        
         $vmNetworkAdapterInfo = (Get-VMNetworkAdapter -VMName $WanSimName -ComputerName $ownerNode)
-        $ipAddresses = [System.Collections.ArrayList]@()
-        $filteredIPs = $vmNetworkAdapterInfo.IPAddresses | Where-Object { $_ -notmatch '^fe80:' }
-        foreach ($ip in $filteredIPs) {
-            Write-Log -Message "IP address for '$WanSimName' is '$ip'" @logParams
-            Write-Log -Message "Adding IP address '$ip' to the list of IP addresses" @logParams
-            $ipAddresses.Add($ip)
-        }
-        Write-Log -Message "type is '$($ipAddresses.Gettype())'" @logParams
+        $ipAddresses = $vmNetworkAdapterInfo.IPAddresses | Where-Object { $_ -notmatch '^fe80:' }
+        $ipAddresses | ForEach-Object { Write-Log -Message "IP Address is: $_" @logParams }
         return $ipAddresses
     }
     catch {
