@@ -87,7 +87,7 @@ InModuleScope WanSimMgmt {
             return $true
         }
         Mock New-PSSession {
-           return $true
+            return $true
         }
         Mock Remove-PSSession { 
             return $true
@@ -103,7 +103,7 @@ InModuleScope WanSimMgmt {
             # Check if the function exists
             (Get-Command Invoke-WanSimDeployment) | Should -Not -BeNullOrEmpty
         }
-        Context 'When called with valid paramters'{
+        Context 'When called with valid paramters' {
             It 'Creates a clusterd VM' {
                 Mock Get-ClusterGroup { return $global:testData.ClusterGroup }
                 Mock Get-ClusterResource { return $global:testData.ClusterResource }
@@ -119,11 +119,13 @@ InModuleScope WanSimMgmt {
             It 'Forcefully redploys a clustered VM' {
                 Mock Get-ClusterGroup { return $global:testData.ClusterGroup }
                 Mock Get-ClusterResource { return $global:testData.ClusterResource }
+                Mock Get-VM { return $global:testData.VMs | Where-Object { $_.Name -eq "TestLinux" } }
                 $result = Invoke-WanSimDeployment -WanSimName 'TestLinux' -DeploymentEndpoint 'TestEndpoint' -ForceRedeploy
                 $result | Should -Be $true
             }
             It 'Forcefully redploys a standalone VM' {
                 Mock Get-ClusterGroup { return $false }
+                Mock Get-VM { return $global:testData.VMs | Where-Object { $_.Name -eq "TestLinux" } }
                 $result = Invoke-WanSimDeployment -WanSimName 'TestLinux' -DeploymentEndpoint 'TestEndpoint' -ForceRedeploy
                 $result | Should -Be $true
             }
@@ -135,18 +137,18 @@ InModuleScope WanSimMgmt {
             # Check if the function exists
             (Get-Command Remove-WanSimVM) | Should -Not -BeNullOrEmpty
         }
-        Context 'When called with valid paramters'{
+        Context 'When called with valid paramters' {
             It 'Removes a clusterd VM' -Tag 'tag' {
                 Mock Get-ClusterGroup { return $global:testData.ClusterGroup }
                 Mock Get-ClusterResource { return $global:testData.ClusterResource }
-                Mock Get-VM { return $global:testData.VMs | Where-Object {$_.Name -eq "TestLinux"}  }  
+                Mock Get-VM { return $global:testData.VMs | Where-Object { $_.Name -eq "TestLinux" } }  
                 $result = Remove-WanSimVM -WanSimName 'TestLinux' -DeploymentEndpoint 'TestEndpoint'
                 $result | Should -Be $true
             }
             It 'Removes a standalone VM' -Tag 'tag' {
                 Mock Get-ClusterGroup { return $false }
                 Mock Get-ClusterResource { return $global:testData.ClusterResource }
-                Mock Get-VM { return $global:testData.VMs | Where-Object {$_.Name -eq "TestLinux"}  }  
+                Mock Get-VM { return $global:testData.VMs | Where-Object { $_.Name -eq "TestLinux" } }  
                 $result = Remove-WanSimVM -WanSimName 'TestLinux' -DeploymentEndpoint 'TestEndpoint'
                 $result | Should -Be $true
             }
@@ -172,7 +174,7 @@ InModuleScope WanSimMgmt {
                 Mock Get-VM { return $true } 
                 
                 $result = Get-WanSimIpAddresses -WanSimName 'TestWanSim' -DeploymentEndpoint 'TestEndpoint'
-                foreach ($ip in $result){
+                foreach ($ip in $result) {
                     [ipaddress]$ip | Should -Be $true
                 }
             }
@@ -183,7 +185,7 @@ InModuleScope WanSimMgmt {
                     }
                 }
                 $result = Get-WanSimIpAddresses -WanSimName 'TestWanSim' -DeploymentEndpoint 'TestEndpoint'
-                foreach ($ip in $result){
+                foreach ($ip in $result) {
                     [ipaddress]$ip | Should -Be $true
                 }   
             }
