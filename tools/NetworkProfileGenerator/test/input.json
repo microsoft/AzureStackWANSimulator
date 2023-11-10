@@ -1,0 +1,34 @@
+[
+    {
+        "id": 1,
+        "name": "Default Rule - Change bwRate Only",
+        "subnets": [],
+        "bwRate": "1Gbit",
+        "delay": "",
+        "loss": ""
+    },
+    {
+        "id": 10,
+        "name": "Rule - BW + Delay",
+        "subnets": ["100.69.176.5/32", "100.69.176.6/32"],
+        "bwRate": "1Gbit",
+        "delay": "10ms",
+        "loss": ""
+    },
+    {
+        "id": 20,
+        "name": "Rule - BW + Loss",
+        "subnets": ["100.69.177.20/32","100.69.178.20/24"],
+        "bwRate": "1Gbit",
+        "delay": "",
+        "loss": "5%"
+    },
+    {
+        "id": 30,
+        "name": "Rule - BW + Delay + Loss",
+        "subnets": ["100.69.177.11/32", "100.69.177.12/32"],
+        "bwRate": "100Mbit",
+        "delay": "50ms",
+        "loss": "2%"
+    }
+]
