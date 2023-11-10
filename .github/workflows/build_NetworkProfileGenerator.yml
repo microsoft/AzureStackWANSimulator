@@ -42,15 +42,18 @@ jobs:
         cd ${{ matrix.CODE_DIR }}
         go mod tidy
         GOOS=${{ matrix.OS_WINDOWS }} GOARCH=amd64 go build -o ./${{ matrix.ARTIFACT_DIR }}/${{ matrix.OS_WINDOWS }}/
-        mv ./test/input.json ./${{ matrix.ARTIFACT_DIR }}/${{ matrix.OS_WINDOWS }}/
 
     - name: Build Linux Artifact
       run: |
         cd ${{ matrix.CODE_DIR }}
         go mod tidy
         GOOS=${{ matrix.OS_LINUX }} GOARCH=amd64 go build -o ./${{ matrix.ARTIFACT_DIR }}/${{ matrix.OS_LINUX }}/
-        mv ./test/input.json ./${{ matrix.ARTIFACT_DIR }}/${{ matrix.OS_LINUX }}/
         
+    - name: Copy Sample Input.json
+      run: |
+        cd ${{ matrix.CODE_DIR }}
+        cp ./profile_input.json ./${{ matrix.ARTIFACT_DIR }}/
+
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
