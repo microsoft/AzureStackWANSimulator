@@ -25,6 +25,7 @@ const (
 	rootClass = "1a1a:"
 	protocol  = "protocol ip"
 	sudoTc    = "sudo tc"
+	direction = "dst"
 )
 
 func main() {
@@ -78,7 +79,7 @@ func main() {
 			}
 
 			for _, subnet := range rule.Subnets {
-				writeToFile(file, "%s filter add dev %s %s parent %s prio 1 u32 match ip src %s flowid %s%d\n", sudoTc, vmIntf, protocol, rootClass, subnet, rootClass, rule.Id)
+				writeToFile(file, "%s filter add dev %s %s parent %s prio 1 u32 match ip %s %s flowid %s%d\n", sudoTc, vmIntf, protocol, rootClass, direction, subnet, rootClass, rule.Id)
 			}
 		}
 	}
