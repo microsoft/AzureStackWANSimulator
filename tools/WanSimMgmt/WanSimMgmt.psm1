@@ -99,7 +99,7 @@ function Invoke-WanSimDeployment {
         # BaseLine Image Path
         [Parameter(Mandatory = $false)]
         [System.String]
-        $BaseLineImagePath = 'C:\ClusterStorage\Volume1\Baseline\WANSIM-Baseline.vhdx',
+        $BaseLineImagePath = 'C:\ClusterStorage\Volume1\Baseline\',
 
         [Parameter(Mandatory = $false)]
         [Switch]
@@ -114,6 +114,13 @@ function Invoke-WanSimDeployment {
     
     try { 
         $logParams = @{Function = $MyInvocation.MyCommand.Name; Verbose = $true }
+        Write-Log -Message "Starting Invoke-WanSimDeployment for WanSim '$WanSimName' on DeploymentEndpoint '$DeploymentEndpoint'" @logParams
+
+        Write-Log -Message "Using Get-ChildItem for BaseLineImagePath parameter" @logParams
+        $imagePath = Get-ChildItem -Path $BaseLineImagePath -Filter *.vhdx | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+
+
+
         Write-Log -Message "Creating pssession to '$DeploymentEndpoint'" @logParams
         $session = New-PSSession -ComputerName $DeploymentEndpoint
         Write-Log -Message "Pssession created to '$DeploymentEndpoint'" @logParams
