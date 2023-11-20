@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 4,
+  "id": 11,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -80,7 +80,7 @@
             "type": "influxdb",
             "uid": "f73ea368-8400-4708-b509-83a2a9cab1f3"
           },
-          "query": "data = from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N35R05-WANSIM\")\r\n  |> filter(fn:(r) => r._measurement == \"sflow\")\r\n  |> filter(fn: (r) => r._field == \"bytes\" or r._field == \"sampling_rate\")\r\n  |> filter(fn: (r) => r[\"src_ip\"] != \"10.10.32.129\" and r[\"dst_ip\"] != \"10.10.32.129\" )\r\n  |> keep(columns:[\"_time\",\"_value\",\"_field\",\"src_ip\", \"src_port\", \"dst_ip\", \"dst_port\"])\r\n      \r\nbytes = data |> filter(fn: (r) => r._field == \"bytes\") |> sum() |> set(key: \"_field\", value: \"bytes\")\r\npackets = data |> filter(fn:(r) => r._field == \"sampling_rate\") |> sum() |> set(key: \"_field\",value: \"packets\")\r\nrecords = data |> filter(fn: (r) => r._field== \"bytes\") |> count() |> set(key: \"_field\", value: \"records\") \r\n\r\nunion(tables: [bytes, packets, records])\r\n  |> group()\r\n  |> pivot(rowKey:[\"src_ip\", \"src_port\", \"dst_ip\", \"dst_port\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> keep(columns:[\"src_ip\", \"src_port\", \"dst_ip\", \"dst_port\", \"bytes\", \"packets\", \"records\"])\r\n  |> sort(columns:[\"bytes\"], desc:true)",
+          "query": "data = from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N42R22-WANSIM\")\r\n  |> filter(fn:(r) => r._measurement == \"sflow\")\r\n  |> filter(fn: (r) => r._field == \"bytes\" or r._field == \"sampling_rate\")\r\n  |> filter(fn: (r) => r[\"src_ip\"] != \"10.10.32.132\" and r[\"dst_ip\"] != \"10.10.32.132\" )\r\n  |> keep(columns:[\"_time\",\"_value\",\"_field\",\"src_ip\", \"src_port\", \"dst_ip\", \"dst_port\"])\r\n      \r\nbytes = data |> filter(fn: (r) => r._field == \"bytes\") |> sum() |> set(key: \"_field\", value: \"bytes\")\r\npackets = data |> filter(fn:(r) => r._field == \"sampling_rate\") |> sum() |> set(key: \"_field\",value: \"packets\")\r\nrecords = data |> filter(fn: (r) => r._field== \"bytes\") |> count() |> set(key: \"_field\", value: \"records\") \r\n\r\nunion(tables: [bytes, packets, records])\r\n  |> group()\r\n  |> pivot(rowKey:[\"src_ip\", \"src_port\", \"dst_ip\", \"dst_port\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> keep(columns:[\"src_ip\", \"src_port\", \"dst_ip\", \"dst_port\", \"bytes\", \"packets\", \"records\"])\r\n  |> sort(columns:[\"bytes\"], desc:true)",
           "refId": "A"
         }
       ],
@@ -175,7 +175,7 @@
             "type": "influxdb",
             "uid": "f73ea368-8400-4708-b509-83a2a9cab1f3"
           },
-          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r.host == \"N35R05-WANSIM\")\r\n  |> filter(fn: (r) => r._measurement == \"sflow\")\r\n  |> filter(fn: (r) => r[\"src_ip\"] != \"10.10.32.129\" and r[\"dst_ip\"] != \"10.10.32.129\" )\r\n  |> keep(columns: [\"_time\", \"_value\",\"_field\",\"src_ip\",\"dst_ip\",\"host\"])\r\n  |> filter(fn: (r) => r._field == \"bytes\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: (tables=<-, column) => tables |> sum(column: \"_value\"))",
+          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r.host == \"N42R22-WANSIM\")\r\n  |> filter(fn: (r) => r._measurement == \"sflow\")\r\n  |> filter(fn: (r) => r[\"src_ip\"] != \"10.10.32.132\" and r[\"dst_ip\"] != \"10.10.32.132\" )\r\n  |> keep(columns: [\"_time\", \"_value\",\"_field\",\"src_ip\",\"dst_ip\",\"host\"])\r\n  |> filter(fn: (r) => r._field == \"bytes\")\r\n  //|> aggregateWindow(every: v.windowPeriod, fn: (tables=<-, column) => tables |> sum(column: \"_value\"))",
           "refId": "A"
         }
       ],
@@ -255,7 +255,7 @@
             "type": "influxdb",
             "uid": "f73ea368-8400-4708-b509-83a2a9cab1f3"
           },
-          "query": "data = from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N35R05-WANSIM\")\r\n  |> filter(fn:(r) => r._measurement == \"sflow\")\r\n  |> filter(fn: (r) => r._field== \"bytes\" or r._field == \"sampling_rate\")\r\n  |> filter(fn: (r) => r[\"src_ip\"] != \"10.10.32.129\" and r[\"dst_ip\"] != \"10.10.32.129\" )\r\n  |> keep(columns:[\"_time\",\"_value\",\"_field\",\"src_ip\", \"dst_port\", \"src_port\"])\r\n      \r\n  bytes = data |> filter(fn: (r) => r._field == \"bytes\") |> sum() |> set(key: \"_field\", value: \"bytes\")\r\n  packets = data |> filter(fn:(r) => r._field == \"sampling_rate\") |> sum() |> set(key: \"_field\",value: \"packets\")\r\n  records = data |> filter(fn: (r) => r._field== \"bytes\") |> count() |> set(key: \"_field\", value: \"records\") \r\n\r\n  union(tables: [bytes, packets, records])\r\n  |> group()\r\n  |> pivot(rowKey:[\"src_ip\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> sort(columns:[\"bytes\"], desc:true)",
+          "query": "data = from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N42R22-WANSIM\")\r\n  |> filter(fn:(r) => r._measurement == \"sflow\")\r\n  |> filter(fn: (r) => r._field== \"bytes\" or r._field == \"sampling_rate\")\r\n  |> filter(fn: (r) => r[\"src_ip\"] != \"10.10.32.132\" and r[\"dst_ip\"] != \"10.10.32.132\" )\r\n  |> keep(columns:[\"_time\",\"_value\",\"_field\",\"src_ip\", \"dst_port\", \"src_port\"])\r\n      \r\n  bytes = data |> filter(fn: (r) => r._field == \"bytes\") |> sum() |> set(key: \"_field\", value: \"bytes\")\r\n  packets = data |> filter(fn:(r) => r._field == \"sampling_rate\") |> sum() |> set(key: \"_field\",value: \"packets\")\r\n  records = data |> filter(fn: (r) => r._field== \"bytes\") |> count() |> set(key: \"_field\", value: \"records\") \r\n\r\n  union(tables: [bytes, packets, records])\r\n  |> group()\r\n  |> pivot(rowKey:[\"src_ip\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> sort(columns:[\"bytes\"], desc:true)",
           "refId": "A"
         }
       ],
@@ -320,7 +320,7 @@
             "type": "influxdb",
             "uid": "f73ea368-8400-4708-b509-83a2a9cab1f3"
           },
-          "query": "data = from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N35R05-WANSIM\")\r\n  |> filter(fn:(r) => r._measurement == \"sflow\")\r\n  |> filter(fn: (r) => r._field == \"bytes\" or r._field == \"sampling_rate\")\r\n  |> filter(fn: (r) => r[\"src_ip\"] != \"10.10.32.129\" and r[\"dst_ip\"] != \"10.10.32.129\" )\r\n  |> keep(columns:[\"_time\",\"_value\",\"_field\",\"dst_ip\"])\r\n\r\nbytes = data |> filter(fn: (r) => r._field == \"bytes\") |> sum() |> set(key: \"_field\", value: \"bytes\")\r\npackets = data |> filter(fn:(r) => r._field == \"sampling_rate\") |> sum() |> set(key: \"_field\",value: \"packets\")\r\nrecords = data |> filter(fn: (r) => r._field== \"bytes\") |> count() |> set(key: \"_field\", value: \"records\") \r\n\r\nunion(tables: [bytes, packets, records])\r\n  |> group()\r\n  |> pivot(rowKey:[\"dst_ip\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> sort(columns:[\"bytes\"], desc:true)",
+          "query": "data = from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N42R22-WANSIM\")\r\n  |> filter(fn:(r) => r._measurement == \"sflow\")\r\n  |> filter(fn: (r) => r._field == \"bytes\" or r._field == \"sampling_rate\")\r\n  |> filter(fn: (r) => r[\"src_ip\"] != \"10.10.32.132\" and r[\"dst_ip\"] != \"10.10.32.132\" )\r\n  |> keep(columns:[\"_time\",\"_value\",\"_field\",\"dst_ip\"])\r\n\r\nbytes = data |> filter(fn: (r) => r._field == \"bytes\") |> sum() |> set(key: \"_field\", value: \"bytes\")\r\npackets = data |> filter(fn:(r) => r._field == \"sampling_rate\") |> sum() |> set(key: \"_field\",value: \"packets\")\r\nrecords = data |> filter(fn: (r) => r._field== \"bytes\") |> count() |> set(key: \"_field\", value: \"records\") \r\n\r\nunion(tables: [bytes, packets, records])\r\n  |> group()\r\n  |> pivot(rowKey:[\"dst_ip\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n  |> sort(columns:[\"bytes\"], desc:true)",
           "refId": "A"
         }
       ],
@@ -413,7 +413,7 @@
             "type": "influxdb",
             "uid": "f73ea368-8400-4708-b509-83a2a9cab1f3"
           },
-          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N35R05-WANSIM\")\r\n  |> filter(fn: (r) => r._measurement == \"sflow\")\r\n  |> filter(fn: (r) => r[\"src_ip\"] != \"10.10.32.129\" and r[\"dst_ip\"] != \"10.10.32.129\" )\r\n  |> keep(columns: [\"_time\", \"_value\",\"_field\",\"src_ip\",\"host\"])\r\n  |> filter(fn: (r) => r._field == \"bytes\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: (tables=<-, column) => tables |> sum(column: \"_value\"))\r\n",
+          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N42R22-WANSIM\")\r\n  |> filter(fn: (r) => r._measurement == \"sflow\")\r\n  |> filter(fn: (r) => r[\"src_ip\"] != \"10.10.32.132\" and r[\"dst_ip\"] != \"10.10.32.132\" )\r\n  |> keep(columns: [\"_time\", \"_value\",\"_field\",\"src_ip\",\"host\"])\r\n  |> filter(fn: (r) => r._field == \"bytes\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: (tables=<-, column) => tables |> sum(column: \"_value\"))\r\n",
           "refId": "A"
         }
       ],
@@ -514,7 +514,7 @@
             "type": "influxdb",
             "uid": "f73ea368-8400-4708-b509-83a2a9cab1f3"
           },
-          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N35R05-WANSIM\")\r\n  |> filter(fn: (r) => r._measurement == \"sflow\")\r\n  |> filter(fn: (r) => r[\"src_ip\"] != \"10.10.32.129\" and r[\"dst_ip\"] != \"10.10.32.129\" )\r\n  |> keep(columns: [\"_time\", \"_value\",\"_field\",\"dst_ip\",\"host\"])\r\n  |> filter(fn: (r) => r._field == \"bytes\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: (tables=<-, column) => tables |> sum(column: \"_value\"))",
+          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N42R22-WANSIM\")\r\n  |> filter(fn: (r) => r._measurement == \"sflow\")\r\n  |> filter(fn: (r) => r[\"src_ip\"] != \"10.10.32.132\" and r[\"dst_ip\"] != \"10.10.32.132\" )\r\n  |> keep(columns: [\"_time\", \"_value\",\"_field\",\"dst_ip\",\"host\"])\r\n  |> filter(fn: (r) => r._field == \"bytes\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: (tables=<-, column) => tables |> sum(column: \"_value\"))",
           "refId": "A"
         }
       ],
@@ -615,7 +615,7 @@
             "type": "influxdb",
             "uid": "f73ea368-8400-4708-b509-83a2a9cab1f3"
           },
-          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N35R05-WANSIM\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"free\")\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"disk\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N42R22-WANSIM\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"free\")\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"disk\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
@@ -715,7 +715,7 @@
             "type": "influxdb",
             "uid": "f73ea368-8400-4708-b509-83a2a9cab1f3"
           },
-          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N35R05-WANSIM\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"available\" or r[\"_field\"] == \"used\")\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"mem\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N42R22-WANSIM\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"available\" or r[\"_field\"] == \"used\")\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"mem\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
@@ -806,7 +806,7 @@
             "type": "influxdb",
             "uid": "f73ea368-8400-4708-b509-83a2a9cab1f3"
           },
-          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N35R05-WANSIM\")\r\n  |> filter(fn: (r) => r[\"interface\"] == \"gre1\" or r[\"interface\"] == \"eth0\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"drop_in\" or r[\"_field\"] == \"drop_out\" or r[\"_field\"] == \"err_in\" or r[\"_field\"] == \"err_out\")\r\n  |> difference()",
+          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N42R22-WANSIM\")\r\n  |> filter(fn: (r) => r[\"interface\"] == \"gre1\" or r[\"interface\"] == \"eth0\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"drop_in\" or r[\"_field\"] == \"drop_out\" or r[\"_field\"] == \"err_in\" or r[\"_field\"] == \"err_out\")\r\n  |> difference()",
           "refId": "A"
         }
       ],
@@ -907,7 +907,7 @@
             "type": "influxdb",
             "uid": "f73ea368-8400-4708-b509-83a2a9cab1f3"
           },
-          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N35R05-WANSIM\")\r\n  |> filter(fn: (r) => r[\"interface\"] == \"eth0\" or r[\"interface\"] == \"gre1\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"packets_recv\" or r[\"_field\"] == \"packets_sent\")\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"net\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> derivative(nonNegative: true)\r\n",
+          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N42R22-WANSIM\")\r\n  |> filter(fn: (r) => r[\"interface\"] == \"eth0\" or r[\"interface\"] == \"gre1\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"packets_recv\" or r[\"_field\"] == \"packets_sent\")\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"net\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> derivative(nonNegative: true)\r\n",
           "refId": "A"
         }
       ],
@@ -981,7 +981,7 @@
             "type": "influxdb",
             "uid": "f73ea368-8400-4708-b509-83a2a9cab1f3"
           },
-          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N35R05-WANSIM\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"used_percent\" or r[\"_field\"] == \"available_percent\")\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"mem\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N42R22-WANSIM\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"used_percent\" or r[\"_field\"] == \"available_percent\")\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"mem\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
@@ -1071,7 +1071,7 @@
             "type": "influxdb",
             "uid": "f73ea368-8400-4708-b509-83a2a9cab1f3"
           },
-          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N35R05-WANSIM\")\r\n  |> filter(fn: (r) => r[\"cpu\"] == \"cpu-total\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N42R22-WANSIM\")\r\n  |> filter(fn: (r) => r[\"cpu\"] == \"cpu-total\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
@@ -1172,7 +1172,7 @@
             "type": "influxdb",
             "uid": "f73ea368-8400-4708-b509-83a2a9cab1f3"
           },
-          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N35R05-WANSIM\")\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"procstat\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"cpu_usage\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N42R22-WANSIM\")\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"procstat\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"cpu_usage\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
@@ -1273,7 +1273,7 @@
             "type": "influxdb",
             "uid": "f73ea368-8400-4708-b509-83a2a9cab1f3"
           },
-          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N35R05-WANSIM\")\r\n  |> filter(fn: (r) => r[\"interface\"] == \"eth0\" or r[\"interface\"] == \"gre1\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"bytes_recv\" or r[\"_field\"] == \"bytes_sent\")\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"net\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> derivative(nonNegative: true)",
+          "query": "from(bucket: \"telemetry\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"host\"] == \"N42R22-WANSIM\")\r\n  |> filter(fn: (r) => r[\"interface\"] == \"eth0\" or r[\"interface\"] == \"gre1\" or r[\"interface\"] == \"gre2\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"bytes_recv\" or r[\"_field\"] == \"bytes_sent\")\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"net\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> derivative(nonNegative: true)",
           "refId": "A"
         }
       ],
@@ -1282,7 +1282,7 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": "/.*(recv|sent).*(eth0|gre1).*/",
+            "regex": "/.*(recv|sent).*(eth0|gre[1-2]).*/",
             "renamePattern": "$2 bytes $1"
           }
         }
@@ -1303,8 +1303,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "N35R05-WANSIM",
-  "uid": "N35R05-WANSIM",
-  "version": 3,
+  "title": "N42R22-WANSIM",
+  "uid": "N42R22-WANSIM",
+  "version": 2,
   "weekStart": ""
 }

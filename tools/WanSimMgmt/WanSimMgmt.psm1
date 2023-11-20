@@ -116,33 +116,101 @@ function Invoke-WanSimDeployment {
         $logParams = @{Function = $MyInvocation.MyCommand.Name; Verbose = $true }
         Write-Log -Message "Starting Invoke-WanSimDeployment for WanSim '$WanSimName' on DeploymentEndpoint '$DeploymentEndpoint'" @logParams
 
-        Write-Log -Message "Using Get-ChildItem for BaseLineImagePath parameter" @logParams
-        $imagePath = Get-ChildItem -Path $BaseLineImagePath -Filter *.vhdx | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
-
-
-
         Write-Log -Message "Creating pssession to '$DeploymentEndpoint'" @logParams
         $session = New-PSSession -ComputerName $DeploymentEndpoint
         Write-Log -Message "Pssession created to '$DeploymentEndpoint'" @logParams
-
-        try {
-            Write-Log -Message "Checking if this is a cluster or single server for '$DeploymentEndpoint'" @logParams
-            $currentVMs = Get-ClusterGroup -Cluster $DeploymentEndpoint | Get-ClusterResource | Where-Object { $_.ResourceType -eq "Virtual Machine" }
-            $clustered = $true 
-            Write-Log -Message "This is a cluster" @logParams
-        }
-        catch {
-            $currentVMs = Get-VM -ComputerName $DeploymentEndpoint -ErrorAction SilentlyContinue
-            $clustered = $false
-            Write-Log -Message "This is a single server" @logParams
-        }
-
+        
         Write-Log -Message "ForceRedeploy is set to '$ForceRedeploy'" @logParams
         if (!$ForceRedeploy) {
             
+            $scriptBlock = {
+                try {
+                    $returnData = @{ 
+                        Logs        = [System.Collections.ArrayList]@() ; 
+                        Clustered   = $false ;
+                        $currentVMs = $null ;
+                        Success     = $false  
+                    }
+
+                    # Check if Failover Cluster is installed
+                    $returnData.Logs.Add("Checking if Failover Cluster is installed")
+                    try {
+                        $clusterInstalled = Get-WindowsFeature -Name Failover-Clustering
+                        $returnData.Logs.Add("Failover Cluster on '$env:COMPUTERNAME' InstallState is '$($clusterInstalled.Installed)' and Installed is '$($clusterInstalled.Installed)'")
+                        $returnData.Logs.Add("Attempting to get clustered VMs")
+                        $currentVMs = Get-ClusterGroup | Get-ClusterResource | Where-Object { $_.ResourceType -eq "Virtual Machine" }
+                        Write-Log -Message "Success at getting clustered VMs. This is a clustered environment" @logParams
+                        $returnData.Clustered = $true
+
+                    }
+                    catch {
+                        $returnData.Clustered = $false
+                        $returnData.Logs.Add("Failover Cluster is not installed")
+                        $returnData.Logs.Add("Getting current VMs")
+                        $currentVMs = Get-VM
+                    }
+                    $returnData.Success = $true
+                    $returnData.$currentVMs = $currentVMs
+                    return $returnData
+
+                }
+                catch {
+                    # More detailed failure information
+                    $file = $_.InvocationInfo.ScriptName
+                    $line = $_.InvocationInfo.ScriptLineNumber
+                    $exceptionMessage = $_.Exception.Message
+                    $errorMessage = "Failure during Invoke-WanSimDeployment. Error: $file : $line >> $exceptionMessage"
+                    $returnData.Logs.Add($errorMessage)
+                    $returnData.Success = $false
+                    return $returnData
+                }
+
+                
+            }
+            
+            # Execute the scriptblock
+            Write-Log -Message "Executing remote scriptblock to get currrent VM's" @logParams
+            $environmentInfo = Invoke-Command -Session $session -ScriptBlock $scriptBlock
+            Write-Log -Message "Remote scriptblock completed." @logParams
+            Write-Log -Message "Success is '$($environmentInfo.Success)'" @logParams
+            Write-Log -Message "Logs from Pssession are:" @logParams
+            foreach ($log in $return.Logs) {
+                Write-Log -Message $log @logParams
+            }
+            if (!$environmentInfo.Success) {
+                throw "Excpetion caught in script block for Invoke-WanSimDeployment. See logs for more details."
+            }
+            $currentVMs = $environmentInfo.currentVMs
+            $clustered = $environmentInfo.Clustered
+            
+            if ($clustered -eq $true ) {
+
+                # Check if OS is Server edition
+                $osVersion = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name "ProductName").ProductName
+                if ($osVersion -match "Server") {
+                    Write-Log -Message "OS is Server edition" @logParams
+                    Write-Log -Message "Checking if Failover Clusters is installed" @logParams
+                    $clusterInstalled = Get-WindowsFeature -Name Failover-Clustering
+                    $returnData.Logs.Add("Failover Cluster on '$env:COMPUTERNAME' InstallState is '$($clusterInstalled.Installed)' and Installed is '$($clusterInstalled.Installed)'")
+                    if ($clusterInstalled.Installed -eq $false) {
+                        Write-Log -Message "Failover Clusters is not installed. Installing now." @logParams
+                        $null = Install-WindowsFeature -Name Failover-Clustering -IncludeManagementTools
+                    }
+                }
+                else {
+                    Write-Log -Message "OS is not Server edition" @logParams
+                    Write-Log -Message "Checking if Rsat.FailoverCluster.Management.Tools is installed" @logParams
+                    $rsatFailverCluster = Get-WindowsCapability -Name Rsat.FailoverCluster.Management.Tools* -Online 
+                    if ($rsatFailverCluster.Installed -eq $false) {
+                        Write-Log -Message "Rsat.FailoverCluster.Management.Tools is not installed. Installing now." @logParams
+                        $null = Add-WindowsCapability -Online -Name $rsatFailverCluster.Name
+                    }
+                } 
+            }
+            
             # Check for current VM's
             if ([bool]$currentVMs) {
-                if ($clustered) {
+                if ($returnData.Clustered) {
                     Write-Log -Message "Checking if '$WanSimName' already exists on '$DeploymentEndpoint' as a clustered VM" @logParams
                     foreach ($vm in $currentVMs) {
                         if ($vm.OwnerGroup.name -eq $WanSimName) {
@@ -156,7 +224,6 @@ function Invoke-WanSimDeployment {
                                 Write-Log -Message "VM '$WanSimName' is already running on '$DeploymentEndpoint'" @logParams
                                 return $true
                             }
-                            
                         }                    
                     }
                 }
@@ -197,6 +264,21 @@ function Invoke-WanSimDeployment {
                 $imagePath = $using:BaseLineImagePath
                 $vlan = $using:VlanId
 
+                $returnData.Logs.Add("Using Get-ChildItem for BaseLineImagePath parameter.")
+                $imageFile = Get-ChildItem -Path $imagePath -Filter *.vhdx | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+
+                # Check if Failover Cluster is installed
+                $returnData.Logs.Add("Checking if Failover Cluster is installed")
+                try {
+                    $clusterInstalled = Get-WindowsFeature -Name Failover-Clustering
+                    $clustered = $true 
+                    $returnData.Logs.Add("Failover Cluster InstallState is '$($clusterInstalled.Installed)' and Installed is '$($clusterInstalled.Installed)'")
+                }
+                catch {
+                    $clustered = $false
+                    $returnData.Logs.Add("Failover Cluster is not installed")
+                }
+                
                 # Calculate the volume number based on the hash of the $WanSimName variable
                 # Convert the $WanSimName string to a byte array using UTF8 encoding
                 # Calculate the sum of the byte array using the Measure-Object cmdlet
@@ -208,14 +290,13 @@ function Invoke-WanSimDeployment {
                 $volume = "Volume$($wanSimNameHashSum % 2 + 1)"
                 $returnData.Logs.Add("Calculated volume is: '$volume'")
         
-                if (Test-Path $imagePath) {
-                    $returnData.Logs.Add("Baseline image found at '$imagePath'")
+                if (Test-Path $image) {
+                    $returnData.Logs.Add("Baseline image found at '$imageFile'")
                 }
                 else {
-                    $returnData.Logs.Add("Baseline image not found at '$imagePath'")
-                    throw "Baseline image not found at '$imagePath'"
+                    $returnData.Logs.Add("Baseline image not found at '$imageFile'")
+                    throw "Baseline image not found at '$imageFile'"
                 }
-                $imageFile = Get-Item -Path $imagePath
                 $diffFileName = $vmName + '.diff' + $imageFile.Extension
                 $rootVmFilePath = "C:\ClusterStorage\$($volume)\WANSIM_VMs\"
                 $vhdxRootPath = Join-Path -Path $rootVmFilePath -ChildPath $vmName
@@ -247,6 +328,7 @@ function Invoke-WanSimDeployment {
                 
                 $returnData.Logs.Add("Starting VM '$vmName'")
                 $null = Start-VM -VMName $vmName
+
                 $returnData.Success = $true
                 return $returnData
             }
@@ -258,7 +340,7 @@ function Invoke-WanSimDeployment {
                 $errorMessage = "Failure during Invoke-WanSimDeployment. Error: $file : $line >> $exceptionMessage"
                 $returnData.Logs.Add($errorMessage)
                 $returnData.Success = $false
-                throw $errorMessage
+                return $returnData
             }  
         }
 
