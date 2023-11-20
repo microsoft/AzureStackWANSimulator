@@ -1,0 +1,88 @@
+---
+- name: Ping test
+  hosts: UbuntuVM
+  gather_facts: true
+  become: true
+
+  tasks:
+    - name: Ping remote host
+      ping:
+
+    - name: Update APT cache
+      apt:
+        update_cache: yes
+
+    - name: Install essential packages
+      apt:
+        name:
+          - net-tools
+          - frr
+          - iperf
+          - iperf3
+          - traceroute
+          - lldpd
+        state: present
+
+    - name: Replace frr daemons file - Enable bgpd
+      copy:
+        src: /home/AnsibleWANSIM/daemons
+        dest: /etc/frr/daemons
+
+    - name: Restart frr service
+      shell: service frr restart
+      warn: false
+
+    - name: Show frr service status
+      shell: service frr status
+      register: frr_status
+
+    - name: Display frr status
+      debug:
+        var: frr_status.stdout_lines
+
+    - name: Config iptables rule for MSS Fix
+      shell: sudo iptables -t mangle -A FORWARD -o eth0 -p tcp --tcp-flags SYN,RST SYN -m tcpmss --mss 1436:10000 -j TCPMSS --set-mss 1436
+
+    # - name: Remove iptables rule for MSS Fix
+    #   shell: sudo iptables -t mangle -D FORWARD -o eth0 -p tcp --tcp-flags SYN,RST SYN -m tcpmss --mss 1436:10000 -j TCPMSS --set-mss 1436
+
+    - name: Show iptables rules
+      shell: iptables -t mangle -L
+      register: iptables_output
+
+    - name: Display iptables rules
+      debug:
+        var: iptables_output.stdout_lines
+
+    - name: Copy the script to the remote host
+      copy:
+        src: /home/AnsibleWANSIM/wansim_log.sh
+        dest: /home/wansimadmin/wansim_log.sh
+        mode: "0755" # Set the executable permission
+
+    - name: Make the script executable
+      file:
+        path: /home/wansimadmin/wansim_log.sh
+        mode: +x
+
+    - name: Execute log.sh on remote host
+      shell: /home/wansimadmin/wansim_log.sh
+
+    - name: Schedule the script using cron
+      cron:
+        name: "Run wansim_log.sh every 30 minutes"
+        minute: "*/30"
+        job: "sudo /home/wansimadmin/wansim_log.sh"
+
+    # - name: Remove the cron task
+    #   cron:
+    #     name: "Run wansim_log.sh every 30 minutes"
+    #     state: absent
+
+    - name: Check current cron tasks
+      shell: crontab -l
+      register: current_cron_tasks
+
+    - name: Display current cron tasks
+      debug:
+        var: current_cron_tasks.stdout_lines
