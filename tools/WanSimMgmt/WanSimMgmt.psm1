@@ -429,6 +429,10 @@ function Remove-WanSimVM {
             Write-Log -Message "Pssession created to '$DeploymentEndpoint'" @logParams
         }
 
+        ###
+        # NEED TO FIX, maybe add a function to test if its a cluster or not.
+        ###
+
         Write-Log -Message "Checking if '$WanSimName' is in the ClusterGroup" @logParams
         $clusteredVM = Get-ClusterGroup -Name $WanSimName -Cluster $DeploymentEndpoint -ErrorAction SilentlyContinue
         if ([bool]$clusteredVM -eq $true) {
@@ -463,6 +467,8 @@ function Remove-WanSimVM {
                     Success = $false ; 
                 }
                 $vmFilepath = $using:vmPath
+                
+                #
                 $returnData.Logs.Add("Starting remoteley executed scritpblock.")
                 $vmName = $using:WanSimName
                 $returnData.Logs.Add("Stopping existing VM '$vmName'")
