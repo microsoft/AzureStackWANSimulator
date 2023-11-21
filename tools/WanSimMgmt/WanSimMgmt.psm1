@@ -263,21 +263,11 @@ function Invoke-WanSimDeployment {
                 $vmName = $using:WanSimName
                 $imagePath = $using:BaseLineImagePath
                 $vlan = $using:VlanId
+                #$isClustered = $using:clustered
+
 
                 $returnData.Logs.Add("Using Get-ChildItem for BaseLineImagePath parameter.")
                 $imageFile = Get-ChildItem -Path $imagePath -Filter *.vhdx | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
-
-                # Check if Failover Cluster is installed
-                $returnData.Logs.Add("Checking if Failover Cluster is installed")
-                try {
-                    $clusterInstalled = Get-WindowsFeature -Name Failover-Clustering
-                    $clustered = $true 
-                    $returnData.Logs.Add("Failover Cluster InstallState is '$($clusterInstalled.Installed)' and Installed is '$($clusterInstalled.Installed)'")
-                }
-                catch {
-                    $clustered = $false
-                    $returnData.Logs.Add("Failover Cluster is not installed")
-                }
                 
                 # Calculate the volume number based on the hash of the $WanSimName variable
                 # Convert the $WanSimName string to a byte array using UTF8 encoding
