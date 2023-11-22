@@ -687,7 +687,8 @@ function Get-DeploymentEndpointInfo {
                     $file = $_.InvocationInfo.ScriptName
                     $line = $_.InvocationInfo.ScriptLineNumber
                     $exceptionMessage = $_.Exception.Message
-                    $errorMessage = "Failure in try block. Error: $file : $line >> $exceptionMessage"
+                    $errorMessage = "Exception in try block. Error: $file : $line >> $exceptionMessage"
+                    $returnData.Logs.Add($errorMessage)
                     $returnData.Clustered = $false
                     $returnData.Logs.Add("Failover Cluster is not installed")
                     $returnData.Logs.Add("Getting current VMs")
@@ -704,7 +705,6 @@ function Get-DeploymentEndpointInfo {
                 $line = $_.InvocationInfo.ScriptLineNumber
                 $exceptionMessage = $_.Exception.Message
                 $errorMessage = "Failure during Get-DeploymentEndpointInfo. Error: $file : $line >> $exceptionMessage"
-                $returnData.Logs.Add($errorMessage)
                 $returnData.Logs.Add($errorMessage)
                 $returnData.Success = $false
                 return $returnData
