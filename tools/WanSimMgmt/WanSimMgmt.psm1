@@ -705,6 +705,7 @@ function Get-DeploymentEndpointInfo {
                 $exceptionMessage = $_.Exception.Message
                 $errorMessage = "Failure during Get-DeploymentEndpointInfo. Error: $file : $line >> $exceptionMessage"
                 $returnData.Logs.Add($errorMessage)
+                $returnData.Logs.Add($errorMessage)
                 $returnData.Success = $false
                 return $returnData
             }
