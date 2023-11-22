@@ -727,8 +727,8 @@ function Get-DeploymentEndpointInfo {
         }
 
         $clustered = $environmentInfo.Clustered
-            
-        if ($clustered -eq $true -and $Global:TOOLS_INSTALLED -eq $false) {
+            #-and $Global:TOOLS_INSTALLED -eq $false
+        if ($clustered -eq $true ) {
 
             # Check if OS is Server edition
             $osVersion = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name "ProductName").ProductName
