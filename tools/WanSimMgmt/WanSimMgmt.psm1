@@ -382,6 +382,11 @@ function Remove-WanSimVM {
 
 
         if ([bool]$clustered -eq $true) {
+            $vmInfo =  $currentVms | Where-Object { $_.OwnerGroup.Name -eq $WanSimName }
+            if (![bool]$vmInfo) {
+                Write-Log -Message "VM '$WanSimName' does not exist. Exiting now." @logParams
+                return $true
+            }
             Write-Log -Message "VM '$WanSimName' is a clustered VM." @logParams
             $ownerNode = ($currentVms | Where-Object { $_.OwnerGroup.Name -eq $WanSimName }).OwnerNode.Name
 
