@@ -465,7 +465,7 @@ function Remove-WanSimVM {
         if ([bool]$clusteredVM -eq $true) {
             Write-Log -Message "VM '$WanSimName' is a clustered VM." @logParams
             $currentVms | Where-Object { $_.OwnerGroup.Name -eq $WanSimName } | Stop-VM -Force
-            
+
             $ownerNode = $clusteredVM.OwnerNode.Name
             Write-Log -Message "The owner nodes is '$ownerNode'" @logParams
             Write-Log -Message "Removing existing VM '$WanSimName' from ClusterGroup" @logParams
@@ -666,10 +666,10 @@ function Get-DeploymentEndpointInfo {
         $scriptBlock = {
             try {
                 $returnData = @{ 
-                    Logs        = [System.Collections.ArrayList]@() ; 
-                    Clustered   = $false ;
+                    Logs       = [System.Collections.ArrayList]@() ; 
+                    Clustered  = $false ;
                     CurrentVMs = $null ;
-                    Success     = $false  
+                    Success    = $false  
                 }
 
                 # Check if Failover Cluster is installed
@@ -684,6 +684,10 @@ function Get-DeploymentEndpointInfo {
 
                 }
                 catch {
+                    $file = $_.InvocationInfo.ScriptName
+                    $line = $_.InvocationInfo.ScriptLineNumber
+                    $exceptionMessage = $_.Exception.Message
+                    $errorMessage = "Failure in try block. Error: $file : $line >> $exceptionMessage"
                     $returnData.Clustered = $false
                     $returnData.Logs.Add("Failover Cluster is not installed")
                     $returnData.Logs.Add("Getting current VMs")
@@ -725,12 +729,12 @@ function Get-DeploymentEndpointInfo {
     }
     catch {
             
-            # More detailed failure information
-            $file = $_.InvocationInfo.ScriptName
-            $line = $_.InvocationInfo.ScriptLineNumber
-            $exceptionMessage = $_.Exception.Message
-            $errorMessage = "Failure during Get-DeploymentEndpointInfo. Error: $file : $line >> $exceptionMessage"
-            Write-Log -Message $errorMessage @logParams
-            throw $errorMessage
+        # More detailed failure information
+        $file = $_.InvocationInfo.ScriptName
+        $line = $_.InvocationInfo.ScriptLineNumber
+        $exceptionMessage = $_.Exception.Message
+        $errorMessage = "Failure during Get-DeploymentEndpointInfo. Error: $file : $line >> $exceptionMessage"
+        Write-Log -Message $errorMessage @logParams
+        throw $errorMessage
     }
 }
