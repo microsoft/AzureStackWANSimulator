@@ -679,7 +679,7 @@ function Get-DeploymentEndpointInfo {
                     $returnData.Logs.Add("Failover Cluster on '$env:COMPUTERNAME' InstallState is '$($clusterInstalled.Installed)' and Installed is '$($clusterInstalled.Installed)'")
                     $returnData.Logs.Add("Attempting to get clustered VMs")
                     $currentVMs = Get-ClusterGroup | Get-ClusterResource | Where-Object { $_.ResourceType -eq "Virtual Machine" }
-                    Write-Log -Message "Success at getting clustered VMs. This is a clustered environment" @logParams
+                    $returnData.Logs.Add("Success at getting clustered VMs. This is a clustered environment")
                     $returnData.Clustered = $true
 
                 }
