@@ -130,97 +130,16 @@ function Invoke-WanSimDeployment {
         $session = New-PSSession -ComputerName $DeploymentEndpoint
         Write-Log -Message "Pssession created to '$DeploymentEndpoint'" @logParams
         
+        $deploymentEndpointInfo = Get-DeploymentEndpointInfo -DeploymentEndpoint $DeploymentEndpoint -Session $session
+        $clustered = $deploymentEndpointInfo.Clustered
+        $currentVms = $deploymentEndpointInfo.CurrentVMs
+
         Write-Log -Message "ForceRedeploy is set to '$ForceRedeploy'" @logParams
         if (!$ForceRedeploy) {
-            
-            $scriptBlock = {
-                try {
-                    $returnData = @{ 
-                        Logs        = [System.Collections.ArrayList]@() ; 
-                        Clustered   = $false ;
-                        $currentVMs = $null ;
-                        Success     = $false  
-                    }
 
-                    # Check if Failover Cluster is installed
-                    $null = $returnData.Logs.Add("Checking if Failover Cluster is installed")
-                    try {
-                        $clusterInstalled = Get-WindowsFeature -Name Failover-Clustering
-                        $null = $returnData.Logs.Add("Failover Cluster on '$env:COMPUTERNAME' InstallState is '$($clusterInstalled.Installed)' and Installed is '$($clusterInstalled.Installed)'")
-                        $null = $returnData.Logs.Add("Attempting to get clustered VMs")
-                        $currentVMs = Get-ClusterGroup | Get-ClusterResource | Where-Object { $_.ResourceType -eq "Virtual Machine" }
-                        Write-Log -Message "Success at getting clustered VMs. This is a clustered environment" @logParams
-                        $returnData.Clustered = $true
-
-                    }
-                    catch {
-                        $returnData.Clustered = $false
-                        $null = $returnData.Logs.Add("Failover Cluster is not installed")
-                        $null = $returnData.Logs.Add("Getting current VMs")
-                        $currentVMs = Get-VM
-                    }
-                    $returnData.Success = $true
-                    $returnData.$currentVMs = $currentVMs
-                    return $returnData
-
-                }
-                catch {
-                    # More detailed failure information
-                    $file = $_.InvocationInfo.ScriptName
-                    $line = $_.InvocationInfo.ScriptLineNumber
-                    $exceptionMessage = $_.Exception.Message
-                    $errorMessage = "Failure during Invoke-WanSimDeployment. Error: $file : $line >> $exceptionMessage"
-                    $null = $returnData.Logs.Add($errorMessage)
-                    $returnData.Success = $false
-                    return $returnData
-                }
-
-                
-            }
-            
-            # Execute the scriptblock
-            Write-Log -Message "Executing remote scriptblock to get currrent VM's" @logParams
-            $environmentInfo = Invoke-Command -Session $session -ScriptBlock $scriptBlock
-            Write-Log -Message "Remote scriptblock completed." @logParams
-            Write-Log -Message "Success is '$($environmentInfo.Success)'" @logParams
-            Write-Log -Message "Logs from Pssession are:" @logParams
-            foreach ($log in $return.Logs) {
-                Write-Log -Message $log @logParams
-            }
-            if (!$environmentInfo.Success) {
-                throw "Excpetion caught in script block for Invoke-WanSimDeployment. See logs for more details."
-            }
-            $currentVMs = $environmentInfo.currentVMs
-            $clustered = $environmentInfo.Clustered
-            
-            if ($clustered -eq $true ) {
-
-                # Check if OS is Server edition
-                $osVersion = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name "ProductName").ProductName
-                if ($osVersion -match "Server") {
-                    Write-Log -Message "OS is Server edition" @logParams
-                    Write-Log -Message "Checking if Failover Clusters is installed" @logParams
-                    $clusterInstalled = Get-WindowsFeature -Name Failover-Clustering
-                    $null = $returnData.Logs.Add("Failover Cluster on '$env:COMPUTERNAME' InstallState is '$($clusterInstalled.Installed)' and Installed is '$($clusterInstalled.Installed)'")
-                    if ($clusterInstalled.Installed -eq $false) {
-                        Write-Log -Message "Failover Clusters is not installed. Installing now." @logParams
-                        $null = Install-WindowsFeature -Name Failover-Clustering -IncludeManagementTools
-                    }
-                }
-                else {
-                    Write-Log -Message "OS is not Server edition" @logParams
-                    Write-Log -Message "Checking if Rsat.FailoverCluster.Management.Tools is installed" @logParams
-                    $rsatFailverCluster = Get-WindowsCapability -Name Rsat.FailoverCluster.Management.Tools* -Online 
-                    if ($rsatFailverCluster.Installed -eq $false) {
-                        Write-Log -Message "Rsat.FailoverCluster.Management.Tools is not installed. Installing now." @logParams
-                        $null = Add-WindowsCapability -Online -Name $rsatFailverCluster.Name
-                    }
-                } 
-            }
-            
             # Check for current VM's
             if ([bool]$currentVMs) {
-                if ($returnData.Clustered) {
+                if ($clustered) {
                     Write-Log -Message "Checking if '$WanSimName' already exists on '$DeploymentEndpoint' as a clustered VM" @logParams
                     foreach ($vm in $currentVMs) {
                         if ($vm.OwnerGroup.name -eq $WanSimName) {
@@ -458,11 +377,11 @@ function Remove-WanSimVM {
         ###
 
         $deploymentEndpointInfo = Get-DeploymentEndpointInfo -DeploymentEndpoint $DeploymentEndpoint -Session $session
-        $clusteredVM = $deploymentEndpointInfo.Clustered
+        $clustered = $deploymentEndpointInfo.Clustered
         $currentVms = $deploymentEndpointInfo.CurrentVMs
 
 
-        if ([bool]$clusteredVM -eq $true) {
+        if ([bool]$clustered -eq $true) {
             Write-Log -Message "VM '$WanSimName' is a clustered VM." @logParams
             $ownerNode = ($currentVms | Where-Object { $_.OwnerGroup.Name -eq $WanSimName }).OwnerNode.Name
 
@@ -727,7 +646,6 @@ function Get-DeploymentEndpointInfo {
         }
 
         $clustered = $environmentInfo.Clustered
-            #-and $Global:TOOLS_INSTALLED -eq $false
         Write-Log -Message "Clustered is '$clustered' and TOOLS_INSTALLED is '$([bool]$Global:TOOLS_INSTALLED)'" @logParams
         if ($clustered -eq $true -and [bool]$Global:TOOLS_INSTALLED -eq $false) {
 
