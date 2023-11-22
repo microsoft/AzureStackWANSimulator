@@ -96,7 +96,7 @@ function Invoke-WanSimDeployment {
         [System.String]
         $DeploymentEndpoint,
 
-        # BaseLine Image Path
+        # Location to the directory or the actual BaseLine Image to be used. If the location is a directory, the most recent image will be used.
         [Parameter(Mandatory = $false)]
         [System.String]
         $BaseLineImagePath = 'C:\ClusterStorage\Volume1\Baseline\',
@@ -104,6 +104,11 @@ function Invoke-WanSimDeployment {
         [Parameter(Mandatory = $false)]
         [Switch]
         $ForceRedeploy,
+
+        # WAN SIM File Path is the location the WanSims Vhdx and assiciated files will be saved.
+        [Parameter(Mandatory = $false)]
+        [System.String]
+        $WanSimFilePath = 'C:\ClusterStorage\Volume1\WANSIM_VMs\',
         
         # VLAN ID to use for the VM
         [Parameter(Mandatory = $false)]
@@ -116,6 +121,11 @@ function Invoke-WanSimDeployment {
         $logParams = @{Function = $MyInvocation.MyCommand.Name; Verbose = $true }
         Write-Log -Message "Starting Invoke-WanSimDeployment for WanSim '$WanSimName' on DeploymentEndpoint '$DeploymentEndpoint'" @logParams
 
+        # check if WansimFilePath is bound param
+        $isWanSimFilePathBound = $PSBoundParameters.ContainsKey('WanSimFilePath')
+        Write-Log -Message "WanSimFilePath is bound parameter is '$isWanSimFilePathBound'" @logParams
+        Write-Log -Message "WanSimFilePath is '$WanSimFilePath'" @logParams
+            
         Write-Log -Message "Creating pssession to '$DeploymentEndpoint'" @logParams
         $session = New-PSSession -ComputerName $DeploymentEndpoint
         Write-Log -Message "Pssession created to '$DeploymentEndpoint'" @logParams
@@ -263,6 +273,8 @@ function Invoke-WanSimDeployment {
                 $vmName = $using:WanSimName
                 $imagePath = $using:BaseLineImagePath
                 $vlan = $using:VlanId
+                $wanSimPath = $using:WanSimFilePath
+                $wanSimPathBound = $using:isWanSimFilePathBound
                 #$isClustered = $using:clustered
 
 
@@ -279,6 +291,18 @@ function Invoke-WanSimDeployment {
                 # This will give us a 1 or 2.
                 $volume = "Volume$($wanSimNameHashSum % 2 + 1)"
                 $returnData.Logs.Add("Calculated volume is: '$volume'")
+
+                if ($wanSimPathBound) {
+                    $returnData.Logs.Add("Using WanSimFilePath parameter.")
+                    $rootVmFilePath = $wanSimPath
+                }
+                else {
+                    $volume = "Volume$($wanSimNameHashSum % 2 + 1)"
+                    $returnData.Logs.Add("Calculated volume is: '$volume'")
+                    $returnData.Logs.Add("Using default WanSimFilePath.")
+                    $rootVmFilePath = "C:\ClusterStorage\$($volume)\WANSIM_VMs\"
+                }
+                $returnData.Logs.Add("Root VM File Path is: '$rootVmFilePath'")
         
                 if (Test-Path $image) {
                     $returnData.Logs.Add("Baseline image found at '$imageFile'")
@@ -287,8 +311,8 @@ function Invoke-WanSimDeployment {
                     $returnData.Logs.Add("Baseline image not found at '$imageFile'")
                     throw "Baseline image not found at '$imageFile'"
                 }
+
                 $diffFileName = $vmName + '.diff' + $imageFile.Extension
-                $rootVmFilePath = "C:\ClusterStorage\$($volume)\WANSIM_VMs\"
                 $vhdxRootPath = Join-Path -Path $rootVmFilePath -ChildPath $vmName
                 $diffFilePath = Join-Path -Path $vhdxRootPath -ChildPath $diffFileName
                 if (Test-Path -Path $diffFilePath) {
@@ -433,10 +457,15 @@ function Remove-WanSimVM {
         # NEED TO FIX, maybe add a function to test if its a cluster or not.
         ###
 
-        Write-Log -Message "Checking if '$WanSimName' is in the ClusterGroup" @logParams
-        $clusteredVM = Get-ClusterGroup -Name $WanSimName -Cluster $DeploymentEndpoint -ErrorAction SilentlyContinue
+        $deploymentEndpointInfo = Get-DeploymentEndpointInfo -DeploymentEndpoint $DeploymentEndpoint -Session $session
+        $clusteredVM = $deploymentEndpointInfo.Clustered
+        $currentVms = $deploymentEndpointInfo.CurrentVMs
+
+
         if ([bool]$clusteredVM -eq $true) {
             Write-Log -Message "VM '$WanSimName' is a clustered VM." @logParams
+            $currentVms | Where-Object { $_.OwnerGroup.Name -eq $WanSimName } | Stop-VM -Force
+            
             $ownerNode = $clusteredVM.OwnerNode.Name
             Write-Log -Message "The owner nodes is '$ownerNode'" @logParams
             Write-Log -Message "Removing existing VM '$WanSimName' from ClusterGroup" @logParams
@@ -606,4 +635,102 @@ function Get-WanSimIpAddresses {
         throw $errorMessage
     }
 
+}
+
+#############################
+# Region Internal functions #
+#############################
+
+
+function Get-DeploymentEndpointInfo {
+    [CmdletBinding()]
+    Param (
+
+        # The HCI Cluster or Server to deploy against.
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $DeploymentEndpoint,
+
+        # PS Session to the deployment endpoint
+        [Parameter(Mandatory = $true)]
+        [System.Management.Automation.Runspaces.PSSession]
+        $Session
+ 
+    )
+
+    try {
+
+        $logParams = @{ Function = $MyInvocation.MyCommand.Name; Verbose = $true }
+        Write-Log -Message "Starting Get-DeploymentEndpointInfo for DeploymentEndpoint '$DeploymentEndpoint'" @logParams
+
+        $scriptBlock = {
+            try {
+                $returnData = @{ 
+                    Logs        = [System.Collections.ArrayList]@() ; 
+                    Clustered   = $false ;
+                    CurrentVMs = $null ;
+                    Success     = $false  
+                }
+
+                # Check if Failover Cluster is installed
+                $returnData.Logs.Add("Checking if Failover Cluster is installed")
+                try {
+                    $clusterInstalled = Get-WindowsFeature -Name Failover-Clustering
+                    $returnData.Logs.Add("Failover Cluster on '$env:COMPUTERNAME' InstallState is '$($clusterInstalled.Installed)' and Installed is '$($clusterInstalled.Installed)'")
+                    $returnData.Logs.Add("Attempting to get clustered VMs")
+                    $currentVMs = Get-ClusterGroup | Get-ClusterResource | Where-Object { $_.ResourceType -eq "Virtual Machine" }
+                    Write-Log -Message "Success at getting clustered VMs. This is a clustered environment" @logParams
+                    $returnData.Clustered = $true
+
+                }
+                catch {
+                    $returnData.Clustered = $false
+                    $returnData.Logs.Add("Failover Cluster is not installed")
+                    $returnData.Logs.Add("Getting current VMs")
+                    $currentVMs = Get-VM
+                }
+                $returnData.Success = $true
+                $returnData.CurrentVMs = $currentVMs
+                return $returnData
+
+            }
+            catch {
+                # More detailed failure information
+                $file = $_.InvocationInfo.ScriptName
+                $line = $_.InvocationInfo.ScriptLineNumber
+                $exceptionMessage = $_.Exception.Message
+                $errorMessage = "Failure during Get-DeploymentEndpointInfo. Error: $file : $line >> $exceptionMessage"
+                $returnData.Logs.Add($errorMessage)
+                $returnData.Success = $false
+                return $returnData
+            }
+
+            
+        }
+        
+        # Execute the scriptblock
+        Write-Log -Message "Executing remote scriptblock to determine if the wansim is clusterd and get current VM's" @logParams
+        $environmentInfo = Invoke-Command -Session $Session -ScriptBlock $scriptBlock
+        Write-Log -Message "Remote scriptblock completed." @logParams
+        Write-Log -Message "Success is '$($environmentInfo.Success)'" @logParams
+        Write-Log -Message "Logs from pssession are:" @logParams
+        foreach ($log in $environmentInfo.Logs) {
+            Write-Log -Message $log @logParams
+        }
+        if (!$environmentInfo.Success) {
+            throw "Excpetion caught in script block for Remove-WanSimVM. See logs for more details."
+        }
+        return $environmentInfo
+
+    }
+    catch {
+            
+            # More detailed failure information
+            $file = $_.InvocationInfo.ScriptName
+            $line = $_.InvocationInfo.ScriptLineNumber
+            $exceptionMessage = $_.Exception.Message
+            $errorMessage = "Failure during Get-DeploymentEndpointInfo. Error: $file : $line >> $exceptionMessage"
+            Write-Log -Message $errorMessage @logParams
+            throw $errorMessage
+    }
 }
