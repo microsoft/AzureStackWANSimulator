@@ -231,6 +231,7 @@ function Invoke-WanSimDeployment {
                     throw "Baseline image not found at '$imageFile'"
                 }
 
+                #### PROBLEM IN HERE I NEED TO FIX
                 $diffFileName = $vmName + '.diff' + $imageFile.Extension
                 $vhdxRootPath = Join-Path -Path $rootVmFilePath -ChildPath $vmName
                 $diffFilePath = Join-Path -Path $vhdxRootPath -ChildPath $diffFileName
@@ -285,6 +286,9 @@ function Invoke-WanSimDeployment {
         Write-Log -Message "Logs from Pssession are:" @logParams
         foreach ($log in $return.Logs) {
             Write-Log -Message $log @logParams
+        }
+        if (!$return.Success) {
+            throw "Excpetion caught in script block for Invoke-WanSimDeployment. See logs for more details."
         }
         
         if ($clustered) {
