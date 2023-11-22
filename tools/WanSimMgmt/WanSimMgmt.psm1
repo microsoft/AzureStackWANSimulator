@@ -736,7 +736,7 @@ function Get-DeploymentEndpointInfo {
                 Write-Log -Message "OS is Server edition" @logParams
                 Write-Log -Message "Checking if Failover Clusters is installed" @logParams
                 $clusterInstalled = Get-WindowsFeature -Name Failover-Clustering
-                $null = $returnData.Logs.Add("Failover Cluster on '$env:COMPUTERNAME' InstallState is '$($clusterInstalled.Installed)' and Installed is '$($clusterInstalled.Installed)'")
+                Write-Log -Message  "Failover Cluster on '$env:COMPUTERNAME' InstallState is '$($clusterInstalled.Installed)' and Installed is '$($clusterInstalled.Installed)'" @logParams
                 if ($clusterInstalled.Installed -eq $false) {
                     Write-Log -Message "Failover Clusters is not installed. Installing now." @logParams
                     $null = Install-WindowsFeature -Name Failover-Clustering -IncludeManagementTools
