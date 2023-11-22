@@ -464,9 +464,9 @@ function Remove-WanSimVM {
 
         if ([bool]$clusteredVM -eq $true) {
             Write-Log -Message "VM '$WanSimName' is a clustered VM." @logParams
-            $currentVms | Where-Object { $_.OwnerGroup.Name -eq $WanSimName } | Stop-VM -Force
+            $ownerNode = ($currentVms | Where-Object { $_.OwnerGroup.Name -eq $WanSimName }).OwnerNode.Name
 
-            $ownerNode = $clusteredVM.OwnerNode.Name
+            #$ownerNode = $clusteredVM.OwnerNode.Name
             Write-Log -Message "The owner nodes is '$ownerNode'" @logParams
             Write-Log -Message "Removing existing VM '$WanSimName' from ClusterGroup" @logParams
             $null = Remove-ClusterGroup $WanSimName -Cluster $DeploymentEndpoint -Force -RemoveResources
@@ -725,6 +725,37 @@ function Get-DeploymentEndpointInfo {
         if (!$environmentInfo.Success) {
             throw "Excpetion caught in script block for Remove-WanSimVM. See logs for more details."
         }
+
+        $clustered = $environmentInfo.Clustered
+            
+        if ($clustered -eq $true -and $Global:TOOLS_INSTALLED -eq $false) {
+
+            # Check if OS is Server edition
+            $osVersion = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name "ProductName").ProductName
+            if ($osVersion -match "Server") {
+                Write-Log -Message "OS is Server edition" @logParams
+                Write-Log -Message "Checking if Failover Clusters is installed" @logParams
+                $clusterInstalled = Get-WindowsFeature -Name Failover-Clustering
+                $null = $returnData.Logs.Add("Failover Cluster on '$env:COMPUTERNAME' InstallState is '$($clusterInstalled.Installed)' and Installed is '$($clusterInstalled.Installed)'")
+                if ($clusterInstalled.Installed -eq $false) {
+                    Write-Log -Message "Failover Clusters is not installed. Installing now." @logParams
+                    $null = Install-WindowsFeature -Name Failover-Clustering -IncludeManagementTools
+                    $Global:TOOLS_INSTALLED = $true
+                }
+            }
+            else {
+                Write-Log -Message "OS is not Server edition" @logParams
+                Write-Log -Message "Checking if Rsat.FailoverCluster.Management.Tools is installed" @logParams
+                $rsatFailverCluster = Get-WindowsCapability -Name Rsat.FailoverCluster.Management.Tools* -Online 
+                if ($rsatFailverCluster.Installed -eq $false) {
+                    Write-Log -Message "Rsat.FailoverCluster.Management.Tools is not installed. Installing now." @logParams
+                    $null = Add-WindowsCapability -Online -Name $rsatFailverCluster.Name
+                    $Global:TOOLS_INSTALLED = $true
+                }
+            } 
+        }
+
+
         return $environmentInfo
 
     }
