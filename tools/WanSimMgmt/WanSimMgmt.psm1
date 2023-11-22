@@ -742,6 +742,10 @@ function Get-DeploymentEndpointInfo {
                     $null = Install-WindowsFeature -Name Failover-Clustering -IncludeManagementTools
                     $Global:TOOLS_INSTALLED = $true
                 }
+                else {
+                    Write-Log -Message "Failover Clusters is installed." @logParams
+                    $Global:TOOLS_INSTALLED = $true
+                }
             }
             else {
                 Write-Log -Message "OS is not Server edition" @logParams
@@ -750,6 +754,10 @@ function Get-DeploymentEndpointInfo {
                 if ($rsatFailverCluster.Installed -eq $false) {
                     Write-Log -Message "Rsat.FailoverCluster.Management.Tools is not installed. Installing now." @logParams
                     $null = Add-WindowsCapability -Online -Name $rsatFailverCluster.Name
+                    $Global:TOOLS_INSTALLED = $true
+                }
+                else {
+                    Write-Log -Message "Rsat.FailoverCluster.Management.Tools is installed." @logParams
                     $Global:TOOLS_INSTALLED = $true
                 }
             } 
