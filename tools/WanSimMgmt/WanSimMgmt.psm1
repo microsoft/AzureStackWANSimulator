@@ -196,12 +196,9 @@ function Invoke-WanSimDeployment {
                 $wanSimPathBound = $using:isWanSimFilePathBound
                 #$isClustered = $using:clustered
 
-
                 $null = $returnData.Logs.Add("Using Get-ChildItem for BaseLineImagePath parameter.")
                 $imageFile = Get-ChildItem -Path $imagePath -Filter *.vhdx | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
                 
-
-
                 if ($wanSimPathBound) {
                     $null = $returnData.Logs.Add("Using WanSimFilePath parameter.")
                     $rootVmFilePath = $wanSimPath
@@ -280,7 +277,18 @@ function Invoke-WanSimDeployment {
 
         # Execute the scriptblock
         Write-Log -Message "Executing remote scriptblock to create the WAN SIM VM" @logParams
-        $return = Invoke-Command -Session $session -ScriptBlock $scriptBlock
+        try {
+            $return = Invoke-Command -Session $session -ScriptBlock $scriptBlock
+        }
+        catch {
+            $file = $_.InvocationInfo.ScriptName
+            $line = $_.InvocationInfo.ScriptLineNumber
+            $exceptionMessage = $_.Exception.Message
+            $errorMessage = "Failure during Invoke-WanSimDeployment. Error: $file : $line >> $exceptionMessage"
+            Write-Log -Message $errorMessage @logParams
+            #throw $errorMessage
+        }
+        
         Write-Log -Message "Remote scriptblock completed." @logParams
         Write-Log -Message "Success is '$($return.Success)'" @logParams
         Write-Log -Message "Logs from Pssession are:" @logParams
