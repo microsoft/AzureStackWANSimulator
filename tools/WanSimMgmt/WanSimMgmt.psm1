@@ -201,6 +201,7 @@ function Invoke-WanSimDeployment {
                 $imageFile = Get-ChildItem -Path $imagePath -Filter *.vhdx | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
                 $null = $returnData.Logs.Add("Baseline image is '$imageFile'")
                 
+                $null = $returnData.Logs.Add("Checking if wanSimPathBound is true or false. It is '$wanSimPathBound'")
                 if ($wanSimPathBound) {
                     $null = $returnData.Logs.Add("Using WanSimFilePath parameter.")
                     $rootVmFilePath = $wanSimPath
@@ -246,7 +247,7 @@ function Invoke-WanSimDeployment {
                 }
         
                 $null = $returnData.Logs.Add("Creating a new differencing image '$diffFilePath'")
-                $null = New-VHD -Path $diffFilePath -ParentPath $imagePath -Differencing -ErrorAction Stop
+                $null = New-VHD -Path $diffFilePath -ParentPath $imageFile -Differencing -ErrorAction Stop
                 if (Test-Path -Path $diffFilePath) {
                     $null = $returnData.Logs.Add("Diff file created '$diffFilePath'")
                     
