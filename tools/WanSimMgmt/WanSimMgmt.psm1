@@ -232,17 +232,20 @@ function Invoke-WanSimDeployment {
                 #### PROBLEM IN HERE I NEED TO FIX
                 $diffFileName = $vmName + '.diff' + $imageFile.Extension
                 $null = $returnData.Logs.Add("Diff file name is '$diffFileName'")
+
                 $vhdxRootPath = Join-Path -Path $rootVmFilePath -ChildPath $vmName
                 $null = $returnData.Logs.Add("Vhdx root path is '$vhdxRootPath'")
+                
                 $diffFilePath = Join-Path -Path $vhdxRootPath -ChildPath $diffFileName
                 $null = $returnData.Logs.Add("Diff file path is '$diffFilePath'")
+                
                 if (Test-Path -Path $diffFilePath) {
                     $null = $returnData.Logs.Add("Diff file already exists at '$diffFilePath'")
                     $null = Remove-Item -Path $diffFilePath -Force
                 }
         
                 $null = $returnData.Logs.Add("Creating a new differencing image '$diffFilePath'")
-                $null = New-VHD -Path $diffFilePath -ParentPath $imagePath -Differencing
+                $null = New-VHD -Path $diffFilePath -ParentPath $imagePath -Differencing -ErrorAction Stop
                 if (Test-Path -Path $diffFilePath) {
                     $null = $returnData.Logs.Add("Diff file created '$diffFilePath'")
                     
