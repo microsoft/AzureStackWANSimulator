@@ -184,6 +184,7 @@ function Invoke-WanSimDeployment {
         # Scriptblock
         $scriptBlock = {
             try {
+                Write-host "here"
                 $returnData = @{ 
                     Logs    = [System.Collections.ArrayList]@() ; 
                     Success = $false  
@@ -230,8 +231,11 @@ function Invoke-WanSimDeployment {
 
                 #### PROBLEM IN HERE I NEED TO FIX
                 $diffFileName = $vmName + '.diff' + $imageFile.Extension
+                $null = $returnData.Logs.Add("Diff file name is '$diffFileName'")
                 $vhdxRootPath = Join-Path -Path $rootVmFilePath -ChildPath $vmName
+                $null = $returnData.Logs.Add("Vhdx root path is '$vhdxRootPath'")
                 $diffFilePath = Join-Path -Path $vhdxRootPath -ChildPath $diffFileName
+                $null = $returnData.Logs.Add("Diff file path is '$diffFilePath'")
                 if (Test-Path -Path $diffFilePath) {
                     Write-Host "Removing the image file $diffFilePath"
                     $null = Remove-Item -Path $diffFilePath -Force
@@ -273,9 +277,9 @@ function Invoke-WanSimDeployment {
                 $returnData.Success = $false
                 return $returnData
             }
-            finally {
-                $returnData.Logs | ForEach-Object { Write-Host $_  }
-            }  
+           # finally {
+            #    $returnData.Logs | ForEach-Object { Write-Host $_  }
+            #}  
         }
 
         # Execute the scriptblock
