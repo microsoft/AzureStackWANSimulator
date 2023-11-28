@@ -281,6 +281,7 @@ function Invoke-WanSimDeployment {
                 return $returnData
             }
             catch {
+
                 # More detailed failure information
                 $file = $_.InvocationInfo.ScriptName
                 $line = $_.InvocationInfo.ScriptLineNumber
@@ -290,25 +291,14 @@ function Invoke-WanSimDeployment {
                 $returnData.Success = $false
                 return $returnData
             }
-           finally {
-               $returnData.Logs | ForEach-Object { Write-Host $_  }
-           }  
+            finally {
+                $returnData.Logs | ForEach-Object { Write-Host $_ }
+            }  
         }
 
         # Execute the scriptblock
         Write-Log -Message "Executing remote scriptblock to create the WAN SIM VM" @logParams
-        try {
-            $return = Invoke-Command -Session $session -ScriptBlock $scriptBlock
-        }
-        catch {
-            $file = $_.InvocationInfo.ScriptName
-            $line = $_.InvocationInfo.ScriptLineNumber
-            $exceptionMessage = $_.Exception.Message
-            $errorMessage = "Failure during Invoke-WanSimDeployment. Error: $file : $line >> $exceptionMessage"
-            Write-Log -Message $errorMessage @logParams
-            #throw $errorMessage
-        }
-        
+        $return = Invoke-Command -Session $session -ScriptBlock $scriptBlock       
         Write-Log -Message "Remote scriptblock completed." @logParams
         Write-Log -Message "Success is '$($return.Success)'" @logParams
         Write-Log -Message "Logs from Pssession are:" @logParams
@@ -404,14 +394,9 @@ function Remove-WanSimVM {
             Write-Log -Message "Pssession created to '$DeploymentEndpoint'" @logParams
         }
 
-        ###
-        # NEED TO FIX, maybe add a function to test if its a cluster or not.
-        ###
-
         $deploymentEndpointInfo = Get-DeploymentEndpointInfo -DeploymentEndpoint $DeploymentEndpoint -Session $session
         $clustered = $deploymentEndpointInfo.Clustered
         $currentVms = $deploymentEndpointInfo.CurrentVMs
-
 
         if ([bool]$clustered -eq $true) {
             $vmInfo = $currentVms | Where-Object { $_.OwnerGroup -eq $WanSimName }
@@ -421,8 +406,6 @@ function Remove-WanSimVM {
             }
             Write-Log -Message "VM '$WanSimName' is a clustered VM." @logParams
             $ownerNode = ($currentVms | Where-Object { $_.OwnerGroup -eq $WanSimName }).OwnerNode
-
-            #$ownerNode = $clusteredVM.OwnerNode.Name
             Write-Log -Message "The owner nodes is '$ownerNode'" @logParams
             Write-Log -Message "Removing existing VM '$WanSimName' from ClusterGroup" @logParams
             $null = Remove-ClusterGroup $WanSimName -Cluster $DeploymentEndpoint -Force -RemoveResources
@@ -654,7 +637,6 @@ function Get-DeploymentEndpointInfo {
                 $returnData.Success = $true
                 $returnData.CurrentVMs = $currentVMs
                 return $returnData
-
             }
             catch {
                 # More detailed failure information
@@ -666,8 +648,6 @@ function Get-DeploymentEndpointInfo {
                 $returnData.Success = $false
                 return $returnData
             }
-
-            
         }
         
         # Execute the scriptblock
@@ -719,7 +699,6 @@ function Get-DeploymentEndpointInfo {
                 }
             } 
         }
-
 
         return $environmentInfo
 
