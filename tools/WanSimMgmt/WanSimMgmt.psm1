@@ -334,6 +334,9 @@ function Invoke-WanSimDeployment {
             Write-Log -Message "Closing pssession to '$DeploymentEndpoint'" @logParams
             $null = Remove-PSSession -Session $session
         }
+        Write-Log -Message "Removing TOOLS_INSTALLED variable" @logParams
+        Remove-Variable -Scope global -Name TOOLS_INSTALLED -ErrorAction SilentlyContinue
+        
     }  
 }
 
@@ -636,6 +639,7 @@ function Get-DeploymentEndpointInfo {
                 return $returnData
             }
             catch {
+
                 # More detailed failure information
                 $file = $_.InvocationInfo.ScriptName
                 $line = $_.InvocationInfo.ScriptLineNumber
@@ -685,7 +689,7 @@ function Get-DeploymentEndpointInfo {
                 Write-Log -Message "OS is not Server edition" @logParams
                 Write-Log -Message "Checking if Rsat.FailoverCluster.Management.Tools is installed" @logParams
                 $rsatFailverCluster = Get-WindowsCapability -Name Rsat.FailoverCluster.Management.Tools* -Online 
-                if ($rsatFailverCluster.Installed -eq $false) {
+                if ($rsatFailverCluster.State -ne 'Installed' ) {
                     Write-Log -Message "Rsat.FailoverCluster.Management.Tools is not installed. Installing now." @logParams
                     $null = Add-WindowsCapability -Online -Name $rsatFailverCluster.Name
                     $Global:TOOLS_INSTALLED = $true
@@ -696,7 +700,7 @@ function Get-DeploymentEndpointInfo {
                 }
             } 
         }
-
+        Write-Log -Message "Success, Returning environmentInfo." @logParams
         return $environmentInfo
 
     }
