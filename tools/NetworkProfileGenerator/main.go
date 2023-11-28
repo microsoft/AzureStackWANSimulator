@@ -25,7 +25,6 @@ const (
 	rootClass = "1a1a:"
 	protocol  = "protocol ip"
 	sudoTc    = "sudo tc"
-	direction = "dst"
 )
 
 func main() {
@@ -33,10 +32,12 @@ func main() {
 	var inputJson string
 	var outputSh string
 	var vmIntfs string
+	var direction string
 
 	flag.StringVar(&inputJson, "input", "profile_input.json", "Input JSON file")
 	flag.StringVar(&outputSh, "output", "profile_rules.sh", "Output shell script file")
 	flag.StringVar(&vmIntfs, "vmIntfs", "gre1,gre2", "Comma-separated list of VM interfaces")
+	flag.StringVar(&direction, "direction", "dst", "Direction of traffic (src/dst)")
 	flag.Parse()
 
 	vmIntfsSlice := strings.Split(vmIntfs, ",")
