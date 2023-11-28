@@ -237,12 +237,20 @@ function Invoke-WanSimDeployment {
                 $diffFilePath = Join-Path -Path $vhdxRootPath -ChildPath $diffFileName
                 $null = $returnData.Logs.Add("Diff file path is '$diffFilePath'")
                 if (Test-Path -Path $diffFilePath) {
-                    Write-Host "Removing the image file $diffFilePath"
+                    $null = $returnData.Logs.Add("Diff file already exists at '$diffFilePath'")
                     $null = Remove-Item -Path $diffFilePath -Force
                 }
         
                 $null = $returnData.Logs.Add("Creating a new differencing image '$diffFilePath'")
                 $null = New-VHD -Path $diffFilePath -ParentPath $imagePath -Differencing
+                if (Test-Path -Path $diffFilePath) {
+                    $null = $returnData.Logs.Add("Diff file created '$diffFilePath'")
+                    
+                }
+                else {
+                    $null = $returnData.Logs.Add("Diff file not created '$diffFilePath'")
+                    throw "Diff file not created '$diffFilePath'"
+                }
                 $null = $returnData.Logs.Add("New differencing image created at '$diffFilePath'")
         
                 $null = $returnData.Logs.Add("Getting the management vSwitch")
