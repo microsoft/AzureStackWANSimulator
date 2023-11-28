@@ -142,7 +142,7 @@ function Invoke-WanSimDeployment {
                 if ($clustered) {
                     Write-Log -Message "Checking if '$WanSimName' already exists on '$DeploymentEndpoint' as a clustered VM" @logParams
                     foreach ($vm in $currentVMs) {
-                        if ($vm.OwnerGroup.name -eq $WanSimName) {
+                        if ($vm.OwnerGroup -eq $WanSimName) {
                             Write-Log -Message "VM '$WanSimName' already exists on '$DeploymentEndpoint'" @logParams
                             if ($vm.State -ne 'Online') {
                                 Write-Log -Message "VM '$WanSimName' is not running on '$DeploymentEndpoint' setting ForceRedploy" @logParams
