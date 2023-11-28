@@ -272,6 +272,9 @@ function Invoke-WanSimDeployment {
                 $null = $returnData.Logs.Add($errorMessage)
                 $returnData.Success = $false
                 return $returnData
+            }
+            finally {
+                $returnData.Logs | ForEach-Object { Write-Host $_  }
             }  
         }
 
