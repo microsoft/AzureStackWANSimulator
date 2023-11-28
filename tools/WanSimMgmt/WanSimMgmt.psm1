@@ -199,6 +199,7 @@ function Invoke-WanSimDeployment {
 
                 $null = $returnData.Logs.Add("Using Get-ChildItem for BaseLineImagePath parameter.")
                 $imageFile = Get-ChildItem -Path $imagePath -Filter *.vhdx | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+                $null = $returnData.Logs.Add("Baseline image is '$imageFile'")
                 
                 if ($wanSimPathBound) {
                     $null = $returnData.Logs.Add("Using WanSimFilePath parameter.")
