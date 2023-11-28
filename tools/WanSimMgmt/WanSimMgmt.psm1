@@ -200,22 +200,22 @@ function Invoke-WanSimDeployment {
                 $null = $returnData.Logs.Add("Using Get-ChildItem for BaseLineImagePath parameter.")
                 $imageFile = Get-ChildItem -Path $imagePath -Filter *.vhdx | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
                 
-                # Calculate the volume number based on the hash of the $WanSimName variable
-                # Convert the $WanSimName string to a byte array using UTF8 encoding
-                # Calculate the sum of the byte array using the Measure-Object cmdlet
-                # Select the Sum property of the Measure-Object output
-                $wanSimNameHashSum = [System.Text.Encoding]::UTF8.GetBytes($vmName) | Measure-Object -Sum | Select-Object -ExpandProperty Sum
-                
-                # Calculate the volume number by taking the modulo (remainder) of the sum divided by 2 and adding 1. 
-                # This will give us a 1 or 2.
-                $volume = "Volume$($wanSimNameHashSum % 2 + 1)"
-                $null = $returnData.Logs.Add("Calculated volume is: '$volume'")
+
 
                 if ($wanSimPathBound) {
                     $null = $returnData.Logs.Add("Using WanSimFilePath parameter.")
                     $rootVmFilePath = $wanSimPath
                 }
                 else {
+
+                    # Calculate the volume number based on the hash of the $WanSimName variable
+                    # Convert the $WanSimName string to a byte array using UTF8 encoding
+                    # Calculate the sum of the byte array using the Measure-Object cmdlet
+                    # Select the Sum property of the Measure-Object output
+                    $wanSimNameHashSum = [System.Text.Encoding]::UTF8.GetBytes($vmName) | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+                
+                    # Calculate the volume number by taking the modulo (remainder) of the sum divided by 2 and adding 1. 
+                    # This will give us a 1 or 2.
                     $volume = "Volume$($wanSimNameHashSum % 2 + 1)"
                     $null = $returnData.Logs.Add("Calculated volume is: '$volume'")
                     $null = $returnData.Logs.Add("Using default WanSimFilePath.")
@@ -223,7 +223,7 @@ function Invoke-WanSimDeployment {
                 }
                 $null = $returnData.Logs.Add("Root VM File Path is: '$rootVmFilePath'")
         
-                if (Test-Path $image) {
+                if (Test-Path $imageFile) {
                     $null = $returnData.Logs.Add("Baseline image found at '$imageFile'")
                 }
                 else {
@@ -386,7 +386,7 @@ function Remove-WanSimVM {
 
 
         if ([bool]$clustered -eq $true) {
-            $vmInfo =  $currentVms | Where-Object { $_.OwnerGroup.Name -eq $WanSimName }
+            $vmInfo = $currentVms | Where-Object { $_.OwnerGroup.Name -eq $WanSimName }
             if (![bool]$vmInfo) {
                 Write-Log -Message "VM '$WanSimName' does not exist. Exiting now." @logParams
                 return $true
