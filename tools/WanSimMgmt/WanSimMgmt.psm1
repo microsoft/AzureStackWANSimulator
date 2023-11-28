@@ -291,9 +291,6 @@ function Invoke-WanSimDeployment {
                 $returnData.Success = $false
                 return $returnData
             }
-            finally {
-                $returnData.Logs | ForEach-Object { Write-Host $_ }
-            }  
         }
 
         # Execute the scriptblock
