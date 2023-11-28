@@ -184,7 +184,7 @@ function Invoke-WanSimDeployment {
         # Scriptblock
         $scriptBlock = {
             try {
-                Write-host "here"
+                $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
                 $returnData = @{ 
                     Logs    = [System.Collections.ArrayList]@() ; 
                     Success = $false  
@@ -247,7 +247,7 @@ function Invoke-WanSimDeployment {
                 }
         
                 $null = $returnData.Logs.Add("Creating a new differencing image '$diffFilePath'")
-                $null = New-VHD -Path $diffFilePath -ParentPath $imageFile -Differencing -ErrorAction Stop
+                $null = New-VHD -Path $diffFilePath -ParentPath $imageFile -Differencing
                 if (Test-Path -Path $diffFilePath) {
                     $null = $returnData.Logs.Add("Diff file created '$diffFilePath'")
                     
@@ -275,7 +275,7 @@ function Invoke-WanSimDeployment {
                 $null = Set-VMNetworkAdapterVlan -VMName $vmName -VlanId $vlan -Access
                 
                 $null = $returnData.Logs.Add("Starting VM '$vmName'")
-                $null = Start-VM -VMName $vmName -ErrorAction Stop
+                $null = Start-VM -VMName $vmName
 
                 $returnData.Success = $true
                 return $returnData
@@ -621,6 +621,7 @@ function Get-DeploymentEndpointInfo {
 
         $scriptBlock = {
             try {
+                $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
                 $returnData = @{ 
                     Logs       = [System.Collections.ArrayList]@() ; 
                     Clustered  = $false ;
