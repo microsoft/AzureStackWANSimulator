@@ -231,7 +231,7 @@ function Invoke-WanSimDeployment {
                 }
 
                 #### PROBLEM IN HERE I NEED TO FIX
-                $diffFileName = $vmName + '.diff' + $imageFile.Extension
+                $diffFileName = $vmName + '.diff' + (Get-Item $imageFile).Extension
                 $null = $returnData.Logs.Add("Diff file name is '$diffFileName'")
 
                 $vhdxRootPath = Join-Path -Path $rootVmFilePath -ChildPath $vmName
@@ -274,7 +274,7 @@ function Invoke-WanSimDeployment {
                 $null = Set-VMNetworkAdapterVlan -VMName $vmName -VlanId $vlan -Access
                 
                 $null = $returnData.Logs.Add("Starting VM '$vmName'")
-                $null = Start-VM -VMName $vmName
+                $null = Start-VM -VMName $vmName -ErrorAction Stop
 
                 $returnData.Success = $true
                 return $returnData
