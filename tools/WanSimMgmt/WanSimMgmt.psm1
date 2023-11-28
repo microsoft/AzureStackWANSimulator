@@ -96,14 +96,19 @@ function Invoke-WanSimDeployment {
         [System.String]
         $DeploymentEndpoint,
 
-        # BaseLine Image Path
+        # Location to the directory or the actual BaseLine Image to be used. If the location is a directory, the most recent image will be used.
         [Parameter(Mandatory = $false)]
         [System.String]
-        $BaseLineImagePath = 'C:\ClusterStorage\Volume1\Baseline\WANSIM-Baseline.vhdx',
+        $BaseLineImagePath = 'C:\ClusterStorage\Volume1\Baseline\',
 
         [Parameter(Mandatory = $false)]
         [Switch]
         $ForceRedeploy,
+
+        # WAN SIM File Path is the location the WanSims Vhdx and assiciated files will be saved.
+        [Parameter(Mandatory = $false)]
+        [System.String]
+        $WanSimFilePath = 'C:\ClusterStorage\Volume1\WANSIM_VMs\',
         
         # VLAN ID to use for the VM
         [Parameter(Mandatory = $false)]
@@ -114,31 +119,30 @@ function Invoke-WanSimDeployment {
     
     try { 
         $logParams = @{Function = $MyInvocation.MyCommand.Name; Verbose = $true }
+        Write-Log -Message "Starting Invoke-WanSimDeployment for WanSim '$WanSimName' on DeploymentEndpoint '$DeploymentEndpoint'" @logParams
+
+        # check if WansimFilePath is bound param
+        $isWanSimFilePathBound = $PSBoundParameters.ContainsKey('WanSimFilePath')
+        Write-Log -Message "WanSimFilePath is bound parameter is '$isWanSimFilePathBound'" @logParams
+        Write-Log -Message "WanSimFilePath is '$WanSimFilePath'" @logParams
+            
         Write-Log -Message "Creating pssession to '$DeploymentEndpoint'" @logParams
         $session = New-PSSession -ComputerName $DeploymentEndpoint
         Write-Log -Message "Pssession created to '$DeploymentEndpoint'" @logParams
-
-        try {
-            Write-Log -Message "Checking if this is a cluster or single server for '$DeploymentEndpoint'" @logParams
-            $currentVMs = Get-ClusterGroup -Cluster $DeploymentEndpoint | Get-ClusterResource | Where-Object { $_.ResourceType -eq "Virtual Machine" }
-            $clustered = $true 
-            Write-Log -Message "This is a cluster" @logParams
-        }
-        catch {
-            $currentVMs = Get-VM -ComputerName $DeploymentEndpoint -ErrorAction SilentlyContinue
-            $clustered = $false
-            Write-Log -Message "This is a single server" @logParams
-        }
+        
+        $deploymentEndpointInfo = Get-DeploymentEndpointInfo -DeploymentEndpoint $DeploymentEndpoint -Session $session
+        $clustered = $deploymentEndpointInfo.Clustered
+        $currentVms = $deploymentEndpointInfo.CurrentVMs
 
         Write-Log -Message "ForceRedeploy is set to '$ForceRedeploy'" @logParams
         if (!$ForceRedeploy) {
-            
+
             # Check for current VM's
             if ([bool]$currentVMs) {
                 if ($clustered) {
                     Write-Log -Message "Checking if '$WanSimName' already exists on '$DeploymentEndpoint' as a clustered VM" @logParams
                     foreach ($vm in $currentVMs) {
-                        if ($vm.OwnerGroup.name -eq $WanSimName) {
+                        if ($vm.OwnerGroup -eq $WanSimName) {
                             Write-Log -Message "VM '$WanSimName' already exists on '$DeploymentEndpoint'" @logParams
                             if ($vm.State -ne 'Online') {
                                 Write-Log -Message "VM '$WanSimName' is not running on '$DeploymentEndpoint' setting ForceRedploy" @logParams
@@ -149,7 +153,6 @@ function Invoke-WanSimDeployment {
                                 Write-Log -Message "VM '$WanSimName' is already running on '$DeploymentEndpoint'" @logParams
                                 return $true
                             }
-                            
                         }                    
                     }
                 }
@@ -181,88 +184,126 @@ function Invoke-WanSimDeployment {
         # Scriptblock
         $scriptBlock = {
             try {
+                $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
                 $returnData = @{ 
                     Logs    = [System.Collections.ArrayList]@() ; 
                     Success = $false  
                 }
-                $returnData.Logs.Add("Starting remoteley executed scritpblock.")
+                $null = $returnData.Logs.Add("Starting remoteley executed scritpblock.")
                 $vmName = $using:WanSimName
                 $imagePath = $using:BaseLineImagePath
                 $vlan = $using:VlanId
+                $wanSimPath = $using:WanSimFilePath
+                $wanSimPathBound = $using:isWanSimFilePathBound
+                #$isClustered = $using:clustered
 
-                # Calculate the volume number based on the hash of the $WanSimName variable
-                # Convert the $WanSimName string to a byte array using UTF8 encoding
-                # Calculate the sum of the byte array using the Measure-Object cmdlet
-                # Select the Sum property of the Measure-Object output
-                $wanSimNameHashSum = [System.Text.Encoding]::UTF8.GetBytes($vmName) | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+                $null = $returnData.Logs.Add("Using Get-ChildItem for BaseLineImagePath parameter.")
+                $imageFile = Get-ChildItem -Path $imagePath -Filter *.vhdx | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+                $null = $returnData.Logs.Add("Baseline image is '$imageFile'")
                 
-                # Calculate the volume number by taking the modulo (remainder) of the sum divided by 2 and adding 1. 
-                # This will give us a 1 or 2.
-                $volume = "Volume$($wanSimNameHashSum % 2 + 1)"
-                $returnData.Logs.Add("Calculated volume is: '$volume'")
-        
-                if (Test-Path $imagePath) {
-                    $returnData.Logs.Add("Baseline image found at '$imagePath'")
+                $null = $returnData.Logs.Add("Checking if wanSimPathBound is true or false. It is '$wanSimPathBound'")
+                if ($wanSimPathBound) {
+                    $null = $returnData.Logs.Add("Using WanSimFilePath parameter.")
+                    $rootVmFilePath = $wanSimPath
                 }
                 else {
-                    $returnData.Logs.Add("Baseline image not found at '$imagePath'")
-                    throw "Baseline image not found at '$imagePath'"
+
+                    # Calculate the volume number based on the hash of the $WanSimName variable
+                    # Convert the $WanSimName string to a byte array using UTF8 encoding
+                    # Calculate the sum of the byte array using the Measure-Object cmdlet
+                    # Select the Sum property of the Measure-Object output
+                    $wanSimNameHashSum = [System.Text.Encoding]::UTF8.GetBytes($vmName) | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+                
+                    # Calculate the volume number by taking the modulo (remainder) of the sum divided by 2 and adding 1. 
+                    # This will give us a 1 or 2.
+                    $volume = "Volume$($wanSimNameHashSum % 2 + 1)"
+                    $null = $returnData.Logs.Add("Calculated volume is: '$volume'")
+                    $null = $returnData.Logs.Add("Using default WanSimFilePath.")
+                    $rootVmFilePath = "C:\ClusterStorage\$($volume)\WANSIM_VMs\"
                 }
-                $imageFile = Get-Item -Path $imagePath
-                $diffFileName = $vmName + '.diff' + $imageFile.Extension
-                $rootVmFilePath = "C:\ClusterStorage\$($volume)\WANSIM_VMs\"
+                $null = $returnData.Logs.Add("Root VM File Path is: '$rootVmFilePath'")
+        
+                if (Test-Path $imageFile) {
+                    $null = $returnData.Logs.Add("Baseline image found at '$imageFile'")
+                }
+                else {
+                    $null = $returnData.Logs.Add("Baseline image not found at '$imageFile'")
+                    throw "Baseline image not found at '$imageFile'"
+                }
+
+                #### PROBLEM IN HERE I NEED TO FIX
+                $diffFileName = $vmName + '.diff' + (Get-Item $imageFile).Extension
+                $null = $returnData.Logs.Add("Diff file name is '$diffFileName'")
+
                 $vhdxRootPath = Join-Path -Path $rootVmFilePath -ChildPath $vmName
+                $null = $returnData.Logs.Add("Vhdx root path is '$vhdxRootPath'")
+                
                 $diffFilePath = Join-Path -Path $vhdxRootPath -ChildPath $diffFileName
+                $null = $returnData.Logs.Add("Diff file path is '$diffFilePath'")
+                
                 if (Test-Path -Path $diffFilePath) {
-                    Write-Host "Removing the image file $diffFilePath"
+                    $null = $returnData.Logs.Add("Diff file already exists at '$diffFilePath'")
                     $null = Remove-Item -Path $diffFilePath -Force
                 }
         
-                $returnData.Logs.Add("Creating a new differencing image '$diffFilePath'")
-                $null = New-VHD -Path $diffFilePath -ParentPath $imagePath -Differencing
-                $returnData.Logs.Add("New differencing image created at '$diffFilePath'")
+                $null = $returnData.Logs.Add("Creating a new differencing image '$diffFilePath'")
+                $null = New-VHD -Path $diffFilePath -ParentPath $imageFile -Differencing
+                if (Test-Path -Path $diffFilePath) {
+                    $null = $returnData.Logs.Add("Diff file created '$diffFilePath'")
+                    
+                }
+                else {
+                    $null = $returnData.Logs.Add("Diff file not created '$diffFilePath'")
+                    throw "Diff file not created '$diffFilePath'"
+                }
+                $null = $returnData.Logs.Add("New differencing image created at '$diffFilePath'")
         
-                $returnData.Logs.Add("Getting the management vSwitch")
+                $null = $returnData.Logs.Add("Getting the management vSwitch")
                 $mgmtSwitchName = Get-VMSwitch -SwitchType External | Select-Object -First 1 -ExpandProperty Name 
-                $returnData.Logs.Add("Management vSwitch is '$mgmtSwitchName'")
+                $null = $returnData.Logs.Add("Management vSwitch is '$mgmtSwitchName'")
         
-                $returnData.Logs.Add("Creating a new VM '$vmName'")
+                $null = $returnData.Logs.Add("Creating a new VM '$vmName'")
                 $null = New-VM -Name $vmName -MemoryStartupBytes 4GB -Generation 1 -VHDPath $diffFilePath -SwitchName $mgmtSwitchName -Path $rootVmFilePath
                 
-                $returnData.Logs.Add("Setting VM Proccessor count to 1 and disabling checkpoints")
+                $null = $returnData.Logs.Add("Setting VM Proccessor count to 1 and disabling checkpoints")
                 $null = Set-VM -Name $vmName -ProcessorCount 1 -CheckpointType Disabled
 
-                $returnData.Logs.Add("Setting VM Dynamic Memory to false")
+                $null = $returnData.Logs.Add("Setting VM Dynamic Memory to false")
                 $null = Set-VMMemory -VMName $vmName -DynamicMemoryEnabled $false
 
-                $returnData.Logs.Add("Setting VM VLAN to 2007")
+                $null = $returnData.Logs.Add("Setting VM VLAN to 2007")
                 $null = Set-VMNetworkAdapterVlan -VMName $vmName -VlanId $vlan -Access
                 
-                $returnData.Logs.Add("Starting VM '$vmName'")
+                $null = $returnData.Logs.Add("Starting VM '$vmName'")
                 $null = Start-VM -VMName $vmName
+
                 $returnData.Success = $true
                 return $returnData
             }
             catch {
+
                 # More detailed failure information
                 $file = $_.InvocationInfo.ScriptName
                 $line = $_.InvocationInfo.ScriptLineNumber
                 $exceptionMessage = $_.Exception.Message
-                $errorMessage = "Failure during Invoke-WanSimDeployment. Error: $file : $line >> $exceptionMessage"
-                $returnData.Logs.Add($errorMessage)
+                $errorMessage = "Failure during Invoke-WanSimDeployment Scriptblock. Error: $file : $line >> $exceptionMessage"
+                $null = $returnData.Logs.Add($errorMessage)
                 $returnData.Success = $false
-                throw $errorMessage
-            }  
+                return $returnData
+            }
         }
 
         # Execute the scriptblock
         Write-Log -Message "Executing remote scriptblock to create the WAN SIM VM" @logParams
-        $return = Invoke-Command -Session $session -ScriptBlock $scriptBlock
+        $return = Invoke-Command -Session $session -ScriptBlock $scriptBlock       
         Write-Log -Message "Remote scriptblock completed." @logParams
         Write-Log -Message "Success is '$($return.Success)'" @logParams
         Write-Log -Message "Logs from Pssession are:" @logParams
         foreach ($log in $return.Logs) {
             Write-Log -Message $log @logParams
+        }
+        if (!$return.Success) {
+            throw "Excpetion caught in script block for Invoke-WanSimDeployment. See logs for more details."
         }
         
         if ($clustered) {
@@ -293,6 +334,9 @@ function Invoke-WanSimDeployment {
             Write-Log -Message "Closing pssession to '$DeploymentEndpoint'" @logParams
             $null = Remove-PSSession -Session $session
         }
+        Write-Log -Message "Removing TOOLS_INSTALLED variable" @logParams
+        Remove-Variable -Scope global -Name TOOLS_INSTALLED -ErrorAction SilentlyContinue
+        
     }  
 }
 
@@ -350,11 +394,18 @@ function Remove-WanSimVM {
             Write-Log -Message "Pssession created to '$DeploymentEndpoint'" @logParams
         }
 
-        Write-Log -Message "Checking if '$WanSimName' is in the ClusterGroup" @logParams
-        $clusteredVM = Get-ClusterGroup -Name $WanSimName -Cluster $DeploymentEndpoint -ErrorAction SilentlyContinue
-        if ([bool]$clusteredVM -eq $true) {
+        $deploymentEndpointInfo = Get-DeploymentEndpointInfo -DeploymentEndpoint $DeploymentEndpoint -Session $session
+        $clustered = $deploymentEndpointInfo.Clustered
+        $currentVms = $deploymentEndpointInfo.CurrentVMs
+
+        if ([bool]$clustered -eq $true) {
+            $vmInfo = $currentVms | Where-Object { $_.OwnerGroup -eq $WanSimName }
+            if (![bool]$vmInfo) {
+                Write-Log -Message "VM '$WanSimName' does not exist, no VM to remove. Exiting now." @logParams
+                return $true
+            }
             Write-Log -Message "VM '$WanSimName' is a clustered VM." @logParams
-            $ownerNode = $clusteredVM.OwnerNode.Name
+            $ownerNode = ($currentVms | Where-Object { $_.OwnerGroup -eq $WanSimName }).OwnerNode
             Write-Log -Message "The owner nodes is '$ownerNode'" @logParams
             Write-Log -Message "Removing existing VM '$WanSimName' from ClusterGroup" @logParams
             $null = Remove-ClusterGroup $WanSimName -Cluster $DeploymentEndpoint -Force -RemoveResources
@@ -384,13 +435,15 @@ function Remove-WanSimVM {
                     Success = $false ; 
                 }
                 $vmFilepath = $using:vmPath
-                $returnData.Logs.Add("Starting remoteley executed scritpblock.")
+                
+                #
+                $null = $returnData.Logs.Add("Starting remoteley executed scritpblock.")
                 $vmName = $using:WanSimName
-                $returnData.Logs.Add("Stopping existing VM '$vmName'")
+                $null = $returnData.Logs.Add("Stopping existing VM '$vmName'")
                 $null = Stop-VM -Name $vmName -Force
-                $returnData.Logs.Add("Removing existing VM '$vmName'")
+                $null = $returnData.Logs.Add("Removing existing VM '$vmName'")
                 $null = Remove-VM -Name $vmName -Force
-                $returnData.Logs.Add("Removing existing all files in path '$vmFilepath'")
+                $null = $returnData.Logs.Add("Removing existing all files in path '$vmFilepath'")
                 $null = Remove-Item -Path $vmFilepath -Recurse -Force
                 $returnData.Success = $true
                 return $returnData
@@ -402,7 +455,7 @@ function Remove-WanSimVM {
                 $line = $_.InvocationInfo.ScriptLineNumber
                 $exceptionMessage = $_.Exception.Message
                 $errorMessage = "Failure during Remove-WanSimVM. Error: $file : $line >> $exceptionMessage"
-                $returnData.Logs.Add($errorMessage)
+                $null = $returnData.Logs.Add($errorMessage)
                 $returnData.Success = $false
                 return $returnData
             }
@@ -521,4 +574,144 @@ function Get-WanSimIpAddresses {
         throw $errorMessage
     }
 
+}
+
+#############################
+# Region Internal functions #
+#############################
+
+
+function Get-DeploymentEndpointInfo {
+    [CmdletBinding()]
+    Param (
+
+        # The HCI Cluster or Server to deploy against.
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $DeploymentEndpoint,
+
+        # PS Session to the deployment endpoint
+        [Parameter(Mandatory = $true)]
+        [System.Management.Automation.Runspaces.PSSession]
+        $Session
+ 
+    )
+
+    try {
+
+        $logParams = @{ Function = $MyInvocation.MyCommand.Name; Verbose = $true }
+        Write-Log -Message "Starting Get-DeploymentEndpointInfo for DeploymentEndpoint '$DeploymentEndpoint'" @logParams
+
+        $scriptBlock = {
+            try {
+                $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+                $returnData = @{ 
+                    Logs       = [System.Collections.ArrayList]@() ; 
+                    Clustered  = $false ;
+                    CurrentVMs = $null ;
+                    Success    = $false  
+                }
+
+                # Check if Failover Cluster is installed
+                $null = $returnData.Logs.Add("Checking if Failover Cluster is installed")
+                try {
+                    $clusterInstalled = Get-WindowsFeature -Name Failover-Clustering
+                    $null = $returnData.Logs.Add("Failover Cluster on '$env:COMPUTERNAME' InstallState is '$($clusterInstalled.Installed)' and Installed is '$($clusterInstalled.Installed)'")
+                    $null = $returnData.Logs.Add("Attempting to get clustered VMs")
+                    $currentVMs = Get-ClusterGroup | Get-ClusterResource | Where-Object { $_.ResourceType -eq "Virtual Machine" }
+                    $null = $returnData.Logs.Add("Success at getting clustered VMs. This is a clustered environment")
+                    $returnData.Clustered = $true
+
+                }
+                catch {
+                    $file = $_.InvocationInfo.ScriptName
+                    $line = $_.InvocationInfo.ScriptLineNumber
+                    $exceptionMessage = $_.Exception.Message
+                    $errorMessage = "Exception in try block. Error: $file : $line >> $exceptionMessage"
+                    $null = $returnData.Logs.Add($errorMessage)
+                    $returnData.Clustered = $false
+                    $null = $returnData.Logs.Add("Failover Cluster is not installed")
+                    $null = $returnData.Logs.Add("Getting current VMs")
+                    $currentVMs = Get-VM
+                }
+                $returnData.Success = $true
+                $returnData.CurrentVMs = $currentVMs
+                return $returnData
+            }
+            catch {
+
+                # More detailed failure information
+                $file = $_.InvocationInfo.ScriptName
+                $line = $_.InvocationInfo.ScriptLineNumber
+                $exceptionMessage = $_.Exception.Message
+                $errorMessage = "Failure during Get-DeploymentEndpointInfo. Error: $file : $line >> $exceptionMessage"
+                $null = $returnData.Logs.Add($errorMessage)
+                $returnData.Success = $false
+                return $returnData
+            }
+        }
+        
+        # Execute the scriptblock
+        Write-Log -Message "Executing remote scriptblock to determine if the wansim is clusterd and get current VM's" @logParams
+        $environmentInfo = Invoke-Command -Session $Session -ScriptBlock $scriptBlock
+        Write-Log -Message "Remote scriptblock completed." @logParams
+        Write-Log -Message "Success is '$($environmentInfo.Success)'" @logParams
+        Write-Log -Message "Logs from pssession are:" @logParams
+        foreach ($log in $environmentInfo.Logs) {
+            Write-Log -Message $log @logParams
+        }
+        if (!$environmentInfo.Success) {
+            throw "Excpetion caught in script block for Remove-WanSimVM. See logs for more details."
+        }
+
+        $clustered = $environmentInfo.Clustered
+        Write-Log -Message "Clustered is '$clustered' and TOOLS_INSTALLED is '$([bool]$Global:TOOLS_INSTALLED)'" @logParams
+        if ($clustered -eq $true -and [bool]$Global:TOOLS_INSTALLED -eq $false) {
+
+            # Check if OS is Server edition
+            $osVersion = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name "ProductName").ProductName
+            if ($osVersion -match "Server") {
+                Write-Log -Message "OS is Server edition" @logParams
+                Write-Log -Message "Checking if Failover Clusters is installed" @logParams
+                $clusterInstalled = Get-WindowsFeature -Name Failover-Clustering
+                Write-Log -Message  "Failover Cluster on '$env:COMPUTERNAME' InstallState is '$($clusterInstalled.Installed)' and Installed is '$($clusterInstalled.Installed)'" @logParams
+                if ($clusterInstalled.Installed -eq $false) {
+                    Write-Log -Message "Failover Clusters is not installed. Installing now." @logParams
+                    $null = Install-WindowsFeature -Name Failover-Clustering -IncludeManagementTools
+                    $Global:TOOLS_INSTALLED = $true
+                }
+                else {
+                    Write-Log -Message "Failover Clusters is installed." @logParams
+                    $Global:TOOLS_INSTALLED = $true
+                }
+            }
+            else {
+                Write-Log -Message "OS is not Server edition" @logParams
+                Write-Log -Message "Checking if Rsat.FailoverCluster.Management.Tools is installed" @logParams
+                $rsatFailverCluster = Get-WindowsCapability -Name Rsat.FailoverCluster.Management.Tools* -Online 
+                if ($rsatFailverCluster.State -ne 'Installed' ) {
+                    Write-Log -Message "Rsat.FailoverCluster.Management.Tools is not installed. Installing now." @logParams
+                    $null = Add-WindowsCapability -Online -Name $rsatFailverCluster.Name
+                    $Global:TOOLS_INSTALLED = $true
+                }
+                else {
+                    Write-Log -Message "Rsat.FailoverCluster.Management.Tools is installed." @logParams
+                    $Global:TOOLS_INSTALLED = $true
+                }
+            } 
+        }
+        Write-Log -Message "Success, Returning environmentInfo." @logParams
+        return $environmentInfo
+
+    }
+    catch {
+            
+        # More detailed failure information
+        $file = $_.InvocationInfo.ScriptName
+        $line = $_.InvocationInfo.ScriptLineNumber
+        $exceptionMessage = $_.Exception.Message
+        $errorMessage = "Failure during Get-DeploymentEndpointInfo. Error: $file : $line >> $exceptionMessage"
+        Write-Log -Message $errorMessage @logParams
+        throw $errorMessage
+    }
 }
