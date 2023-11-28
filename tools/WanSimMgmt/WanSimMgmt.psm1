@@ -271,7 +271,7 @@ function Invoke-WanSimDeployment {
                 $file = $_.InvocationInfo.ScriptName
                 $line = $_.InvocationInfo.ScriptLineNumber
                 $exceptionMessage = $_.Exception.Message
-                $errorMessage = "Failure during Invoke-WanSimDeployment. Error: $file : $line >> $exceptionMessage"
+                $errorMessage = "Failure during Invoke-WanSimDeployment Scriptblock. Error: $file : $line >> $exceptionMessage"
                 $null = $returnData.Logs.Add($errorMessage)
                 $returnData.Success = $false
                 return $returnData
@@ -388,7 +388,7 @@ function Remove-WanSimVM {
         if ([bool]$clustered -eq $true) {
             $vmInfo = $currentVms | Where-Object { $_.OwnerGroup.Name -eq $WanSimName }
             if (![bool]$vmInfo) {
-                Write-Log -Message "VM '$WanSimName' does not exist. Exiting now." @logParams
+                Write-Log -Message "VM '$WanSimName' does not exist, no VM to remove. Exiting now." @logParams
                 return $true
             }
             Write-Log -Message "VM '$WanSimName' is a clustered VM." @logParams
