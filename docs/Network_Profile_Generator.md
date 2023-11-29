@@ -42,52 +42,28 @@ Open [profile_input.json](../tools/NetworkProfileGenerator/profile_input.json) a
 ```json
 [
   {
-    "id": 1,
-    "name": "Default Rule - Change bwRate Only",
-    "subnets": [],
-    "bwRate": "1Gbit",
-    "delay": "",
-    "loss": ""
-  },
-  {
     "id": 10,
-    "name": "Rule - BW + Delay",
-    "subnets": ["100.69.176.5/32", "100.69.176.6/32"],
-    "bwRate": "1Gbit",
-    "delay": "10ms",
-    "loss": ""
-  },
-  {
-    "id": 20,
-    "name": "Rule - BW + Loss",
-    "subnets": ["100.69.177.20/32", "100.69.178.20/24"],
-    "bwRate": "1Gbit",
+    "name": "Rule - BW",
+    "subnets": ["100.72.10.2/23"],
+    "bwRate": "50Mbit",
     "delay": "",
-    "loss": "5%"
-  },
-  {
-    "id": 30,
-    "name": "Rule - BW + Delay + Loss",
-    "subnets": ["100.69.177.11/32", "100.69.177.12/32"],
-    "bwRate": "100Mbit",
-    "delay": "50ms",
-    "loss": "2%"
+    "loss": ""
   }
 ]
 ```
 
 #### Definition rules
 
-- In the json list, **DO NOT** change `id:1` list item except `bwRate` value if needed, because this is default rule which will apply on all the traffic.
-- Except `id:1` list item, feel free to add and delete list item.
+- **DO NOT** use id `1` because its already being used as default htb id.
+- Except `id:1` list item, feel free to add and delete list item with subnets.
 - Update values in each list item based on needs.
 
 | Key     | type            | Example                                 | Comment                           |
 | ------- | --------------- | --------------------------------------- | --------------------------------- |
-| id      | int             | 10                                      | tc class id (please no overlap)   |
+| id      | int             | 10                                      | tc class id (no overlap)          |
 | name    | string          | "Profile Client1: BW10M+Delay100ms"     | profile rule comment              |
 | subnets | list of strings | ["100.69.177.20/32","100.69.178.20/24"] | profile subnet list               |
-| bwRate  | string          | "1Gbit"                                 | Bandwidth rate (Gbit/Mbit/Kbit)   |
+| bwRate  | string          | "50Mbit"                                | Bandwidth rate (Gbit/Mbit/Kbit)   |
 | delay   | string          | "100ms"                                 | delay value for packet transition |
 | loss    | string          | "5%"                                    | percentage of random packets loss |
 
@@ -114,14 +90,18 @@ Mode                 LastWriteTime         Length Name
 
 PS C:\NetworkProfileGenerator\windows> .\NetworkProfileGenerator.exe -h
 Usage of C:\NetworkProfileGenerator\windows\NetworkProfileGenerator.exe:
+  -inboundBW string
+        Total Download Bandwidth for all Subnets (default "1Gbit")
+  -inboundIntfs string
+        Comma-separated list of VM interfaces for inbound traffic (default "gre1,gre2")
   -input string
         Input JSON file (default "profile_input.json")
+  -outboundBW string
+        Total Upload Bandwidth for all Subnets (default "1Gbit")
+  -outboundIntf string
+        VM interfaces for outbound traffic (default "eth0")
   -output string
         Output shell script file (default "profile_rules.sh")
-  -vmIntfs string
-        Comma-separated list of VM interfaces (default "gre1,gre2")
-  -direction string
-        Direction of traffic (src/dst) (default "dst")
 
 PS C:\NetworkProfileGenerator\windows> .\NetworkProfileGenerator.exe -input ..\profile_input.json
 Profile Rule Created:  profile_rules.sh
@@ -141,42 +121,22 @@ Mode                 LastWriteTime         Length Name
 Open output shell script to double check the tc rules.
 
 ```shell
+# TC Rule for Upload
+sudo tc qdisc add dev eth0 root handle 1a1a: htb default 1
+sudo tc class add dev eth0 parent 1a1a: classid 1a1a:1 htb rate 1Gbit
+# TC Rule for Download
 # TC Rule for gre1
-# Default Rule - Change bwRate Only
 sudo tc qdisc add dev gre1 root handle 1a1a: htb default 1
 sudo tc class add dev gre1 parent 1a1a: classid 1a1a:1 htb rate 1Gbit
-# Rule - BW + Delay
-sudo tc class add dev gre1 parent 1a1a: classid 1a1a:10 htb rate 1Gbit
-sudo tc qdisc add dev gre1 parent 1a1a:10 handle 10 netem delay 10ms
-sudo tc filter add dev gre1 protocol ip parent 1a1a: prio 1 u32 match ip dst 100.69.176.5/32 flowid 1a1a:10
-sudo tc filter add dev gre1 protocol ip parent 1a1a: prio 1 u32 match ip dst 100.69.176.6/32 flowid 1a1a:10
-# Rule - BW + Loss
-sudo tc class add dev gre1 parent 1a1a: classid 1a1a:20 htb rate 1Gbit
-sudo tc qdisc add dev gre1 parent 1a1a:20 handle 20 netem loss 5%
-sudo tc filter add dev gre1 protocol ip parent 1a1a: prio 1 u32 match ip dst 100.69.177.20/32 flowid 1a1a:20
-sudo tc filter add dev gre1 protocol ip parent 1a1a: prio 1 u32 match ip dst 100.69.178.20/24 flowid 1a1a:20
-# Rule - BW + Delay + Loss
-sudo tc class add dev gre1 parent 1a1a: classid 1a1a:30 htb rate 100Mbit
-sudo tc qdisc add dev gre1 parent 1a1a:30 handle 30 netem delay 50ms loss 2%
-sudo tc filter add dev gre1 protocol ip parent 1a1a: prio 1 u32 match ip dst 100.69.177.11/32 flowid 1a1a:30
-sudo tc filter add dev gre1 protocol ip parent 1a1a: prio 1 u32 match ip dst 100.69.177.12/32 flowid 1a1a:30
+# Rule - BW
+sudo tc class add dev gre1 parent 1a1a: classid 1a1a:10 htb rate 50Mbit
+sudo tc filter add dev gre1 protocol ip parent 1a1a: prio 1 u32 match ip dst 100.72.10.2/23 flowid 1a1a:10
 # TC Rule for gre2
-# Default Rule - Change bwRate Only
 sudo tc qdisc add dev gre2 root handle 1a1a: htb default 1
 sudo tc class add dev gre2 parent 1a1a: classid 1a1a:1 htb rate 1Gbit
-# Rule - BW + Delay
-sudo tc class add dev gre2 parent 1a1a: classid 1a1a:10 htb rate 1Gbit
-sudo tc qdisc add dev gre2 parent 1a1a:10 handle 10 netem delay 10ms
-sudo tc filter add dev gre2 protocol ip parent 1a1a: prio 1 u32 match ip dst 100.69.176.5/32 flowid 1a1a:10
-sudo tc filter add dev gre2 protocol ip parent 1a1a: prio 1 u32 match ip dst 100.69.176.6/32 flowid 1a1a:10
-# Rule - BW + Loss
-sudo tc class add dev gre2 parent 1a1a: classid 1a1a:20 htb rate 1Gbit
-sudo tc qdisc add dev gre2 parent 1a1a:20 handle 20 netem loss 5%
-sudo tc filter add dev gre2 protocol ip parent 1a1a: prio 1 u32 match ip dst 100.69.177.20/32 flowid 1a1a:20
-sudo tc filter add dev gre2 protocol ip parent 1a1a: prio 1 u32 match ip dst 100.69.178.20/24 flowid 1a1a:20
-# Rule - BW + Delay + Loss
-sudo tc class add dev gre2 parent 1a1a: classid 1a1a:30 htb rate 100Mbit
-sudo tc qdisc add dev gre2 parent 1a1a:30 handle 30 netem delay 50ms loss 2%
-sudo tc filter add dev gre2 protocol ip parent 1a1a: prio 1 u32 match ip dst 100.69.177.11/32 flowid 1a1a:30
-sudo tc filter add dev gre2 protocol ip parent 1a1a: prio 1 u32 match ip dst 100.69.177.12/32 flowid 1a1a:30
+# Rule - BW
+sudo tc class add dev gre2 parent 1a1a: classid 1a1a:10 htb rate 50Mbit
+sudo tc filter add dev gre2 protocol ip parent 1a1a: prio 1 u32 match ip dst 100.72.10.2/23 flowid 1a1a:10
 ```
+
+Check more examples here: [Test_Cases](../tools/NetworkProfileGenerator/test/)
