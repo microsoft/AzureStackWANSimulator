@@ -1,0 +1,10 @@
+[
+  {
+    "id": 10,
+    "name": "Rule - BW",
+    "subnets": ["100.72.10.2/23"],
+    "bwRate": "50Mbit",
+    "delay": "",
+    "loss": ""
+  }
+]
