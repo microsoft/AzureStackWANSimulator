@@ -1,10 +1,15 @@
 [
   {
-    "id": 10,
-    "name": "Rule - BW",
-    "subnets": ["100.72.10.2/23"],
-    "bwRate": "50Mbit",
-    "delay": "",
-    "loss": ""
+    "RuleID": 10,
+    "RuleName": "ENV1 Network Profile",
+    "AppliedSubnets": [
+      "100.72.10.2/23"
+    ],
+    "DownloadBW": "100Mbit",
+    "DownloadDelay": "",
+    "DownloadLoss": "",
+    "UploadBW": "1Gbit",
+    "UploadDelay": "",
+    "UploadLoss": ""
   }
 ]
